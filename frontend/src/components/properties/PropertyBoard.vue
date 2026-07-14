@@ -1,6 +1,6 @@
 <template>
   <section class="max-w-7xl mx-auto">
-    <div class="grid align-items-end mb-5 md:mb-6">
+    <div class="property-intro grid align-items-end mb-5 md:mb-6">
       <div class="col-12 md:col-8">
         <span class="inline-block text-sm uppercase font-bold text-terracotta mb-2 eyebrow">Comparar sem complicar</span>
         <h1 class="display-font text-5xl md:text-7xl line-height-1 m-0 text-ink">Qual lugar parece<br /><em>mais casa?</em></h1>
@@ -119,4 +119,8 @@ async function remove(id: number) {
 <style scoped>
 .eyebrow { letter-spacing: .14em; }
 .empty-icon { width: 5rem; height: 5rem; border-radius: 44% 56% 52% 48%; color: var(--terracotta); background: rgba(182, 92, 58, .1); transform: rotate(-5deg); }
+
+@media (max-width: 767px) {
+  .property-intro { display: none; }
+}
 </style>
