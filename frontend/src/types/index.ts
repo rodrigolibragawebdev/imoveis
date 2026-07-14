@@ -19,6 +19,7 @@ export interface Property {
   location: string | null
   neighborhood: string | null
   rating: PropertyRating
+  preferenceScore: number | null
   note: string
   rankScore: number
   rankPosition: number | null

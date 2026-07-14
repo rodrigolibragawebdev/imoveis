@@ -96,16 +96,11 @@ export const usePropertiesStore = defineStore('properties', () => {
     }
   }
 
-  async function updateReview(id: number, rating: PropertyRating, note: string) {
+  async function updateReview(id: number, rating: PropertyRating, note: string, preferenceScore: number | null) {
     error.value = ''
     try {
-      const { data } = await api.patch<Property>(`/properties/${id}/review`, { rating, note })
-      const remaining = items.value.filter((property) => property.id !== id)
-      if (rating === 'liked') {
-        items.value = [data, ...remaining]
-      } else {
-        items.value = items.value.map((property) => (property.id === id ? data : property))
-      }
+      const { data } = await api.patch<Property>(`/properties/${id}/review`, { rating, note, preferenceScore })
+      items.value = items.value.map((property) => (property.id === id ? data : property))
     } catch (requestError) {
       error.value = getApiError(requestError)
       throw requestError

@@ -80,9 +80,9 @@ async function addLinks(links: string[]) {
   }
 }
 
-async function saveReview(payload: { id: number; rating: PropertyRating; note: string }) {
+async function saveReview(payload: { id: number; rating: PropertyRating; note: string; preferenceScore: number | null }) {
   try {
-    await store.updateReview(payload.id, payload.rating, payload.note)
+    await store.updateReview(payload.id, payload.rating, payload.note, payload.preferenceScore)
   } catch {
     toast.add({ severity: 'error', summary: 'Avaliação não salva', detail: store.error, life: 4000 })
   }

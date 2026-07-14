@@ -29,8 +29,35 @@
 
       <div class="mt-auto">
         <span class="block text-xs uppercase font-bold opacity-50 mb-2 tracking-wide">Meu voto</span>
-        <div class="grid grid-nogutter gap-2 mb-4" role="group" aria-label="Avaliação do imóvel">
+        <div class="grid grid-nogutter gap-2 mb-3" role="group" aria-label="Avaliação do imóvel">
           <Button v-for="option in ratingOptions" :key="option.value" :label="option.label" :icon="option.icon" size="small" :severity="property.rating === option.value ? option.severity : 'secondary'" :outlined="property.rating !== option.value" class="flex-1 text-xs" @click="setRating(option.value)" />
+        </div>
+
+        <div v-if="property.rating === 'liked'" class="preference-scale mb-4">
+          <div class="flex align-items-center justify-content-between gap-2 mb-2">
+            <div>
+              <strong class="text-sm text-ink">Quanto você gostou?</strong>
+              <small class="block opacity-55 mt-1">Opcional · entra no ranking após atualizar</small>
+            </div>
+            <span v-if="property.preferenceScore !== null" class="preference-value">{{ preferenceDraft }}/10</span>
+            <span v-else class="text-xs opacity-55">Sem nota</span>
+          </div>
+          <input
+            :id="`preference-${property.id}`"
+            v-model.number="preferenceDraft"
+            type="range"
+            min="0"
+            max="10"
+            step="1"
+            class="w-full preference-input"
+            :aria-label="`Quanto você gostou de ${property.title}, de zero a dez`"
+            @change="savePreference"
+          />
+          <div class="flex align-items-center justify-content-between text-xs opacity-55 mt-1">
+            <span>0 · pouco</span>
+            <Button v-if="property.preferenceScore !== null" label="Limpar nota" size="small" severity="secondary" text class="clear-score" @click="clearPreference" />
+            <span>10 · amei</span>
+          </div>
         </div>
 
         <label :for="`note-${property.id}`" class="block text-xs uppercase font-bold opacity-50 mb-2 tracking-wide">Por que sim ou não?</label>
@@ -50,10 +77,11 @@ import type { Property, PropertyRating } from '@/types'
 
 const props = defineProps<{ property: Property; position?: number }>()
 const emit = defineEmits<{
-  review: [payload: { id: number; rating: PropertyRating; note: string }]
+  review: [payload: { id: number; rating: PropertyRating; note: string; preferenceScore: number | null }]
   delete: [id: number]
 }>()
 const note = shallowRef(props.property.note)
+const preferenceDraft = shallowRef(props.property.preferenceScore ?? 5)
 const imageFailed = shallowRef(false)
 const ratingOptions = [
   { value: 'liked' as const, label: '+1', icon: 'pi pi-thumbs-up', severity: 'success' as const },
@@ -64,15 +92,34 @@ const priceLabel = computed(() => props.property.price === null ? 'Preço não l
 const duplicateSummary = computed(() => props.property.duplicateMatches[0]?.reason ?? 'Este anúncio se parece com outro imóvel da lista.')
 
 watch(() => props.property.note, (value) => { note.value = value })
+watch(() => props.property.preferenceScore, (value) => { preferenceDraft.value = value ?? 5 })
 watch(() => props.property.imageUrl, () => { imageFailed.value = false })
 
-function setRating(rating: Exclude<PropertyRating, null>) {
-  emit('review', { id: props.property.id, rating: props.property.rating === rating ? null : rating, note: note.value.trim() })
+function emitReview(rating: PropertyRating, preferenceScore: number | null) {
+  emit('review', { id: props.property.id, rating, note: note.value.trim(), preferenceScore })
 }
+
+function setRating(rating: Exclude<PropertyRating, null>) {
+  const nextRating = props.property.rating === rating ? null : rating
+  emitReview(nextRating, nextRating === 'liked' ? props.property.preferenceScore : null)
+}
+
+function savePreference() {
+  emitReview('liked', preferenceDraft.value)
+}
+
+function clearPreference() {
+  preferenceDraft.value = 5
+  emitReview('liked', null)
+}
+
 function saveNote() {
   const cleanNote = note.value.trim()
-  if (cleanNote !== props.property.note) emit('review', { id: props.property.id, rating: props.property.rating, note: cleanNote })
+  if (cleanNote !== props.property.note) {
+    emit('review', { id: props.property.id, rating: props.property.rating, note: cleanNote, preferenceScore: props.property.preferenceScore })
+  }
 }
+
 function requestDelete() {
   if (window.confirm('Remover este imóvel da comparação?')) emit('delete', props.property.id)
 }
@@ -93,5 +140,9 @@ function requestDelete() {
 .card-labels { z-index: 2; max-width: calc(100% - 4.5rem); }
 .rank-position { display: inline-flex; align-items: center; justify-content: center; min-width: 2.25rem; height: 2.25rem; padding: 0 .55rem; border-radius: 999px; color: var(--cream); background: var(--forest); font-family: var(--font-display); font-weight: 800; box-shadow: 0 5px 15px rgba(24, 34, 28, .2); }
 .duplicate-note { padding: .7rem .85rem; border: 1px dashed rgba(38, 112, 134, .32); border-radius: .85rem; color: #285f70; background: rgba(66, 151, 177, .08); }
+.preference-scale { padding: .85rem 1rem .55rem; border: 1px solid rgba(32, 176, 101, .22); border-radius: 1rem; background: linear-gradient(135deg, rgba(32, 176, 101, .08), rgba(255, 252, 244, .78)); }
+.preference-value { min-width: 3.25rem; padding: .35rem .55rem; border-radius: 999px; color: white; background: var(--forest); text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+.preference-input { accent-color: var(--forest); cursor: pointer; }
+.clear-score { padding: .15rem .4rem !important; }
 .tracking-wide { letter-spacing: .08em; }
 </style>

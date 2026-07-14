@@ -2,7 +2,7 @@
 
 ## Banco e migrations
 
-`database.php` abre o PDO e executa os arquivos ordenados de `api/migrations`. A tabela `schema_migrations` registra cada versão. A migration inicial reproduz o schema legado; a seguinte adiciona `normalized_url`, `updated_at` dos móveis e `preferred_neighborhoods`. `seed.php` mantém os dados iniciais fora da conexão.
+`database.php` abre o PDO e executa os arquivos ordenados de `api/migrations`. A tabela `schema_migrations` registra cada versão. A migration inicial reproduz o schema legado; as seguintes adicionam `normalized_url`, `updated_at` dos móveis, `preferred_neighborhoods` e a nota opcional `preference_score`. `seed.php` mantém os dados iniciais fora da conexão.
 
 ## API
 

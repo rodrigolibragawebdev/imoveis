@@ -114,10 +114,30 @@ try {
             throw new ApiException('A observação deve ter até 280 caracteres');
         }
 
+        $preferenceScore = null;
+        if ($rating === 'liked') {
+            if (array_key_exists('preferenceScore', $body)) {
+                if ($body['preferenceScore'] !== null) {
+                    $validatedScore = filter_var($body['preferenceScore'], FILTER_VALIDATE_INT, [
+                        'options' => ['min_range' => 0, 'max_range' => 10],
+                    ]);
+                    if ($validatedScore === false) {
+                        throw new ApiException('A nota precisa ser um número inteiro entre 0 e 10');
+                    }
+                    $preferenceScore = (int) $validatedScore;
+                }
+            } else {
+                $findCurrentScore = $database->prepare('SELECT preference_score FROM properties WHERE id = ?');
+                $findCurrentScore->execute([$id]);
+                $currentScore = $findCurrentScore->fetchColumn();
+                $preferenceScore = $currentScore !== false && $currentScore !== null ? (int) $currentScore : null;
+            }
+        }
+
         $update = $database->prepare(
-            'UPDATE properties SET rating = ?, note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE properties SET rating = ?, preference_score = ?, note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         );
-        $update->execute([$rating, $note, $id]);
+        $update->execute([$rating, $preferenceScore, $note, $id]);
         if ($update->rowCount() === 0) {
             $exists = $database->prepare('SELECT 1 FROM properties WHERE id = ?');
             $exists->execute([$id]);

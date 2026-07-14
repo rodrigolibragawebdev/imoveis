@@ -2,11 +2,12 @@
 
 ## Requisitos
 
-- **RANK-01**: ordenar imóveis avaliados com `+1` no topo do ranking.
-- **RANK-02**: manter um imóvel `-1` na posição atual até a próxima carga e colocá-lo no fim após recarregar.
+- **RANK-01**: ordenar imóveis avaliados com `+1` no topo do ranking após recarregar.
+- **RANK-02**: manter qualquer imóvel votado na posição atual até a próxima carga; só então aplicar a nova posição.
 - **RANK-03**: ocultar imóveis “Muito ruim” do ranking padrão e permitir recuperá-los pelo filtro específico.
 - **RANK-04**: filtrar imóveis por ranking: ranking ativo, `+1`, sem voto, `-1`, muito ruins e possíveis duplicatas.
 - **RANK-05**: filtrar imóveis por bairro.
+- **RANK-06**: permitir nota casual e opcional de 0 a 10 em imóveis com `+1` e usá-la no ranking.
 - **BAIRRO-01**: cadastrar e remover bairros desejados.
 - **BAIRRO-02**: dar bônus de ranking a imóveis localizados em bairros desejados.
 - **DUP-01**: impedir novos cadastros equivalentes após normalizar o link e remover parâmetros de rastreamento.
@@ -21,6 +22,7 @@
 ## Regras de ranking
 
 - `+1`: base 1000 pontos.
+- Nota opcional do `+1`: 10 pontos por nível, de 0 a 100 pontos extras.
 - Sem voto: base 0 pontos.
 - `-1`: base -1000 pontos.
 - Muito ruim: base -10000 pontos e oculto no ranking padrão.
@@ -30,7 +32,7 @@
 ## Critérios de aceite
 
 - Recarregar a página preserva votos, bairros e ordenação.
-- Um `-1` só muda de posição quando a lista for carregada novamente.
+- Nenhum voto muda o card de posição até a lista ser carregada novamente.
 - “Muito ruim” desaparece imediatamente do ranking padrão, mas aparece em seu filtro.
 - O filtro de duplicatas explica se a suspeita veio do link ou da proximidade.
 - Excluir um candidato duplicado usa a remoção normal e nunca acontece automaticamente.

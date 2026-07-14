@@ -18,3 +18,6 @@
 - [x] **T6 — Documentação e entrega**
   - Atualizar README, estado, arquitetura e deploy.
   - Gate: lint PHP, integração, typecheck, build e diff check.
+- [x] **T7 — Refinar voto e corrigir CI**
+  - Adiar a reorganização do `+1`, adicionar nota opcional de 0 a 10 e separar contagens em badges.
+  - Regenerar o lock multiplataforma e validar o build no GitHub Actions.

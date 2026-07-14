@@ -152,7 +152,10 @@ function propertyRankScore(array $property, bool $isPreferred): int
         'terrible' => -10000,
         default => 0,
     };
-    return $base + ($isPreferred ? 100 : 0);
+    $preferenceBonus = $property['rating'] === 'liked' && $property['preferenceScore'] !== null
+        ? (int) $property['preferenceScore'] * 10
+        : 0;
+    return $base + ($isPreferred ? 100 : 0) + $preferenceBonus;
 }
 
 /** @return array<int, array<string, mixed>> */

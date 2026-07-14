@@ -5,7 +5,7 @@
         <span class="rank-seal"><i class="pi pi-chart-bar" /></span>
         <div>
           <strong class="display-font text-xl text-ink">Mesa de decisão</strong>
-          <small class="block opacity-60 mt-1">+1 sobe · −1 vai ao fim na próxima carga · muito ruim sai da lista principal</small>
+          <small class="block opacity-60 mt-1">+1 e −1 ficam no lugar · o ranking reorganiza no próximo refresh</small>
         </div>
       </div>
 
@@ -13,7 +13,8 @@
         <Button
           v-for="option in rankingOptions"
           :key="option.value"
-          :label="`${option.label} ${counts[option.value]}`"
+          :label="option.label"
+          :badge="String(counts[option.value])"
           :icon="option.icon"
           size="small"
           :severity="filter === option.value ? option.severity : 'secondary'"
@@ -82,5 +83,6 @@ const rankingOptions = [
 .rank-seal { width: 2.9rem; height: 2.9rem; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--cream); background: var(--forest); box-shadow: 0 8px 18px rgba(54, 82, 68, .2); }
 .neighborhood-row { border-top: 1px dashed rgba(54, 82, 68, .2); }
 .filter-pills :deep(.p-button) { border-radius: 999px; }
+.filter-pills :deep(.p-badge) { min-width: 1.45rem; margin-left: .15rem; border-radius: 999px; font-variant-numeric: tabular-nums; }
 @media (max-width: 575px) { .desk-title { align-items: flex-start !important; } }
 </style>

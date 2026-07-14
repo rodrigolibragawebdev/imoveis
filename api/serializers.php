@@ -15,6 +15,7 @@ function mapProperty(array $row): array
         'source' => (string) $row['source'],
         'location' => $row['location'] !== null ? (string) $row['location'] : null,
         'rating' => $row['rating'] !== null ? (string) $row['rating'] : null,
+        'preferenceScore' => $row['preference_score'] !== null ? (int) $row['preference_score'] : null,
         'note' => (string) $row['note'],
         'createdAt' => (string) $row['created_at'],
         'updatedAt' => (string) $row['updated_at'],

@@ -27,33 +27,34 @@ try {
     $database->exec('PRAGMA foreign_keys = ON');
     runMigrations($database);
     seedDatabase($database);
-    expect((int) $database->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn() === 2, 'As duas migrations devem ser aplicadas');
+    expect((int) $database->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn() === 3, 'As três migrations devem ser aplicadas');
     expect((int) $database->query('SELECT COUNT(*) FROM furniture_categories')->fetchColumn() === 5, 'O seed deve criar cinco categorias');
     expect((int) $database->query('SELECT COUNT(*) FROM furniture_items')->fetchColumn() === 11, 'O seed deve criar onze móveis');
 
     runMigrations($database);
-    expect((int) $database->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn() === 2, 'As migrations precisam ser idempotentes');
+    expect((int) $database->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn() === 3, 'As migrations precisam ser idempotentes');
 
     $database->prepare('INSERT INTO preferred_neighborhoods (name, normalized_name) VALUES (?, ?)')->execute(['Centro', 'centro']);
     $insert = $database->prepare(<<<'SQL'
         INSERT INTO properties
-          (url, normalized_url, title, source, location, rating, note)
-        VALUES (?, ?, ?, 'teste.local', ?, ?, '')
+          (url, normalized_url, title, source, location, rating, preference_score, note)
+        VALUES (?, ?, ?, 'teste.local', ?, ?, ?, '')
         SQL);
     $fixtures = [
-        ['https://teste.local/imovel/1?utm_source=x', 'Apartamento com 2 quartos e 70 m²', 'Centro, Porto Alegre', 'liked'],
-        ['https://teste.local/imovel/2', 'Apartamento com 2 quartos e 71 m²', 'Centro, Porto Alegre', null],
-        ['https://teste.local/imovel/3', 'Casa com 3 quartos e 110 m²', 'Outro Bairro, Porto Alegre', 'disliked'],
-        ['https://teste.local/imovel/4', 'Apartamento pequeno', 'Centro, Porto Alegre', 'terrible'],
-        ['https://teste.local/imovel/1?fbclid=abc', 'Cópia do anúncio', 'Centro, Porto Alegre', null],
+        ['https://teste.local/imovel/1?utm_source=x', 'Apartamento com 2 quartos e 70 m²', 'Centro, Porto Alegre', 'liked', 7],
+        ['https://teste.local/imovel/2', 'Apartamento com 2 quartos e 71 m²', 'Centro, Porto Alegre', null, null],
+        ['https://teste.local/imovel/3', 'Casa com 3 quartos e 110 m²', 'Outro Bairro, Porto Alegre', 'disliked', null],
+        ['https://teste.local/imovel/4', 'Apartamento pequeno', 'Centro, Porto Alegre', 'terrible', null],
+        ['https://teste.local/imovel/1?fbclid=abc', 'Cópia do anúncio', 'Centro, Porto Alegre', null, null],
     ];
-    foreach ($fixtures as [$url, $title, $location, $rating]) {
-        $insert->execute([$url, normalizeLinkForComparison($url), $title, $location, $rating]);
+    foreach ($fixtures as [$url, $title, $location, $rating, $preferenceScore]) {
+        $insert->execute([$url, normalizeLinkForComparison($url), $title, $location, $rating, $preferenceScore]);
     }
 
     $ranked = listRankedProperties($database);
     expect($ranked[0]['rating'] === 'liked', 'Um +1 deve abrir o ranking');
-    expect($ranked[0]['rankScore'] === 1100, 'O bairro desejado deve somar bônus ao +1');
+    expect($ranked[0]['rankScore'] === 1170, 'Bairro desejado e nota opcional devem somar bônus ao +1');
+    expect($ranked[0]['preferenceScore'] === 7, 'A nota opcional deve ser serializada');
     expect($ranked[0]['isPreferredNeighborhood'] === true, 'Centro deve ser reconhecido como bairro desejado');
 
     $disliked = array_values(array_filter($ranked, static fn (array $item): bool => $item['rating'] === 'disliked'))[0];

@@ -36,8 +36,8 @@ O banco local fica em `data/casa-em-pauta.sqlite`. As migrations e os dados inic
 
 ## Ranking e organização
 
-- `+1` leva o imóvel ao topo imediatamente.
-- `-1` preserva o card no lugar atual e o envia ao fim na próxima carga.
+- `+1` leva o imóvel ao topo na próxima carga e libera uma nota opcional de 0 a 10.
+- Todos os votos preservam o card no lugar atual; a nova posição aparece apenas após atualizar.
 - `Muito ruim` oculta o imóvel do ranking principal; o filtro dedicado permite recuperá-lo.
 - Bairros desejados recebem prioridade e também podem ser usados como filtro.
 - O filtro de duplicatas aponta o mesmo link sem tracking ou candidatos com mesmo bairro, quartos e área praticamente igual. Nada é excluído automaticamente.
