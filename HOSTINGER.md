@@ -4,6 +4,7 @@ Este projeto usa apenas o fluxo de produção:
 
 ```text
 push em main
+  -> lint e teste de integração da API PHP
   -> typecheck
   -> build do frontend
   -> publica frontend e API PHP em hostinger-deploy
@@ -21,13 +22,15 @@ O artefato coloca `index.html`, `assets/`, `.htaccess` e `api/` diretamente ness
 
 ## Configuração da API
 
-A produção usa PHP 8.2 e SQLite, sem um segundo deploy. Ative as extensões `pdo_sqlite`, `curl`, `dom` e `mbstring` no hPanel. A API cria automaticamente o banco em:
+A produção usa PHP 8.2 e SQLite, sem um segundo deploy. Ative as extensões `pdo_sqlite`, `curl`, `dom`, `iconv` e `mbstring` no hPanel. A API cria automaticamente o banco em:
 
 ```text
 /home/SEU_USUARIO/domains/toolsfera.com/imoveis-data/casa-em-pauta.sqlite
 ```
 
 Essa pasta fica fora de `public_html`, portanto o banco não é publicado nem apagado pelo auto deploy. O usuário do PHP precisa ter permissão de escrita em `imoveis-data`; normalmente a pasta é criada automaticamente no primeiro acesso.
+
+As migrations em `api/migrations` rodam automaticamente e uma única vez quando a API recebe a primeira requisição após o deploy. Antes de uma publicação com alteração de schema, mantenha um backup do arquivo SQLite persistente.
 
 Não copie o `.env` local para a produção. Os padrões de produção já usam `https://www.toolsfera.com` e o caminho persistente acima. Se precisar sobrescrevê-los pelo ambiente do servidor, use o modelo [hostinger/env.example](hostinger/env.example).
 

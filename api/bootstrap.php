@@ -126,6 +126,9 @@ function requireAllowedOrigin(): void
     if (rtrim($origin, '/') !== $allowedOrigin) {
         throw new ApiException('Origem não permitida', 403);
     }
+
+    header('Access-Control-Allow-Origin: ' . $allowedOrigin);
+    header('Vary: Origin');
 }
 
 function canonicalHttpUrl(mixed $value, string $field = 'link'): string

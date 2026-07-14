@@ -1,17 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, shallowRef } from 'vue'
 import { api, getApiError } from '@/services/api'
-import type { FurnitureCategory, FurnitureItem } from '@/types'
+import type { FurnitureCategory, FurnitureItem, FurnitureItemInput } from '@/types'
 
 export type FurnitureSort = 'price-asc' | 'price-desc' | 'newest'
-
-interface NewFurnitureItem {
-  categoryId: number
-  url: string
-  title?: string
-  imageUrl?: string
-  price?: number
-}
 
 export const useFurnitureStore = defineStore('furniture', () => {
   const categories = ref<FurnitureCategory[]>([])
@@ -70,8 +62,9 @@ export const useFurnitureStore = defineStore('furniture', () => {
     }
   }
 
-  async function addItem(input: NewFurnitureItem) {
+  async function addItem(input: FurnitureItemInput) {
     saving.value = true
+    error.value = ''
     try {
       await api.post<FurnitureItem>('/furniture/items', input)
       await loadItems()
@@ -83,7 +76,22 @@ export const useFurnitureStore = defineStore('furniture', () => {
     }
   }
 
+  async function updateItem(id: number, input: FurnitureItemInput) {
+    saving.value = true
+    error.value = ''
+    try {
+      await api.patch<FurnitureItem>(`/furniture/items/${id}`, input)
+      await loadItems()
+    } catch (requestError) {
+      error.value = getApiError(requestError)
+      throw requestError
+    } finally {
+      saving.value = false
+    }
+  }
+
   async function removeItem(id: number) {
+    error.value = ''
     try {
       await api.delete(`/furniture/items/${id}`)
       items.value = items.value.filter((item) => item.id !== id)
@@ -105,7 +113,7 @@ export const useFurnitureStore = defineStore('furniture', () => {
     setFilters,
     addCategory,
     addItem,
+    updateItem,
     removeItem,
   }
 })
-

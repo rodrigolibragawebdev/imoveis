@@ -1,86 +1,41 @@
 <template>
   <article class="surface-card border-1 border-round-3xl overflow-hidden flex flex-column property-card">
     <div class="relative card-media">
-      <a
-        :href="property.url"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="block w-full h-full media-link"
-        :aria-label="`Abrir anúncio: ${property.title}`"
-      >
-        <img
-          v-if="property.imageUrl && !imageFailed"
-          :src="property.imageUrl"
-          :alt="property.title"
-          class="w-full h-full object-cover"
-          loading="lazy"
-          referrerpolicy="no-referrer"
-          @error="imageFailed = true"
-        />
-        <div v-else class="w-full h-full flex align-items-center justify-content-center media-fallback">
-          <i class="pi pi-building text-5xl opacity-30" />
-        </div>
-        <span class="absolute media-link-hint">
-          Abrir anúncio <i class="pi pi-arrow-up-right text-xs" />
-        </span>
+      <a :href="property.url" target="_blank" rel="noopener noreferrer" class="block w-full h-full media-link" :aria-label="`Abrir anúncio: ${property.title}`">
+        <img v-if="property.imageUrl && !imageFailed" :src="property.imageUrl" :alt="property.title" class="w-full h-full object-cover" loading="lazy" referrerpolicy="no-referrer" @error="imageFailed = true" />
+        <div v-else class="w-full h-full flex align-items-center justify-content-center media-fallback"><i class="pi pi-building text-5xl opacity-30" /></div>
+        <span class="absolute media-link-hint">Abrir anúncio <i class="pi pi-arrow-up-right text-xs" /></span>
       </a>
-      <Tag :value="property.source" severity="secondary" class="absolute top-0 left-0 m-3" />
-      <Button
-        icon="pi pi-trash"
-        severity="secondary"
-        text
-        rounded
-        aria-label="Remover imóvel"
-        class="absolute top-0 right-0 m-2 media-action"
-        @click="requestDelete"
-      />
+
+      <div class="absolute top-0 left-0 m-3 flex flex-wrap align-items-center gap-2 card-labels">
+        <span v-if="position" class="rank-position" :aria-label="`Posição ${position} no ranking`">#{{ position }}</span>
+        <Tag :value="property.source" severity="secondary" />
+      </div>
+      <Button icon="pi pi-trash" severity="secondary" text rounded aria-label="Remover imóvel" class="absolute top-0 right-0 m-2 media-action" @click="requestDelete" />
     </div>
 
     <div class="p-4 flex flex-column flex-1">
+      <div v-if="property.isPreferredNeighborhood || property.hasDuplicates" class="flex flex-wrap gap-2 mb-3">
+        <Tag v-if="property.isPreferredNeighborhood" :value="property.matchedNeighborhood ? `Bairro desejado · ${property.matchedNeighborhood}` : 'Bairro desejado'" icon="pi pi-heart-fill" severity="success" rounded />
+        <Tag v-if="property.hasDuplicates" :value="`${property.duplicateMatches.length} possível(is) duplicata(s)`" icon="pi pi-clone" severity="info" rounded />
+      </div>
+
       <div class="flex justify-content-between align-items-start gap-3 mb-2">
         <h2 class="display-font text-2xl line-height-2 m-0 text-ink">{{ property.title }}</h2>
         <span class="font-bold text-terracotta white-space-nowrap">{{ priceLabel }}</span>
       </div>
-      <p v-if="property.location" class="m-0 mb-3 text-sm opacity-60">
-        <i class="pi pi-map-marker mr-1" />{{ property.location }}
-      </p>
+      <p v-if="property.location" class="m-0 mb-3 text-sm opacity-60"><i class="pi pi-map-marker mr-1" />{{ property.location }}</p>
+      <div v-if="property.hasDuplicates" class="duplicate-note text-sm line-height-3 mb-3"><i class="pi pi-info-circle mr-2" />{{ duplicateSummary }}</div>
 
       <div class="mt-auto">
         <span class="block text-xs uppercase font-bold opacity-50 mb-2 tracking-wide">Meu voto</span>
         <div class="grid grid-nogutter gap-2 mb-4" role="group" aria-label="Avaliação do imóvel">
-          <Button
-            v-for="option in ratingOptions"
-            :key="option.value"
-            :label="option.label"
-            :icon="option.icon"
-            size="small"
-            :severity="property.rating === option.value ? option.severity : 'secondary'"
-            :outlined="property.rating !== option.value"
-            class="flex-1 text-xs"
-            @click="setRating(option.value)"
-          />
+          <Button v-for="option in ratingOptions" :key="option.value" :label="option.label" :icon="option.icon" size="small" :severity="property.rating === option.value ? option.severity : 'secondary'" :outlined="property.rating !== option.value" class="flex-1 text-xs" @click="setRating(option.value)" />
         </div>
 
         <label :for="`note-${property.id}`" class="block text-xs uppercase font-bold opacity-50 mb-2 tracking-wide">Por que sim ou não?</label>
-        <Textarea
-          :id="`note-${property.id}`"
-          v-model="note"
-          rows="2"
-          auto-resize
-          maxlength="280"
-          class="w-full text-sm"
-          placeholder="Ex.: rua barulhenta, ótima varanda..."
-          @blur="saveNote"
-        />
-
-        <a
-          :href="property.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex align-items-center gap-2 mt-3 text-sm font-bold text-forest no-underline"
-        >
-          Abrir anúncio <i class="pi pi-arrow-up-right text-xs" />
-        </a>
+        <Textarea :id="`note-${property.id}`" v-model="note" rows="2" auto-resize maxlength="280" class="w-full text-sm" placeholder="Ex.: rua barulhenta, ótima varanda..." @blur="saveNote" />
+        <a :href="property.url" target="_blank" rel="noopener noreferrer" class="inline-flex align-items-center gap-2 mt-3 text-sm font-bold text-forest no-underline">Abrir anúncio <i class="pi pi-arrow-up-right text-xs" /></a>
       </div>
     </div>
   </article>
@@ -93,52 +48,31 @@ import Tag from 'primevue/tag'
 import Textarea from 'primevue/textarea'
 import type { Property, PropertyRating } from '@/types'
 
-const props = defineProps<{ property: Property }>()
+const props = defineProps<{ property: Property; position?: number }>()
 const emit = defineEmits<{
   review: [payload: { id: number; rating: PropertyRating; note: string }]
   delete: [id: number]
 }>()
-
 const note = shallowRef(props.property.note)
 const imageFailed = shallowRef(false)
-
 const ratingOptions = [
   { value: 'liked' as const, label: '+1', icon: 'pi pi-thumbs-up', severity: 'success' as const },
   { value: 'disliked' as const, label: '−1', icon: 'pi pi-thumbs-down', severity: 'warn' as const },
   { value: 'terrible' as const, label: 'Muito ruim', icon: 'pi pi-times-circle', severity: 'danger' as const },
 ]
+const priceLabel = computed(() => props.property.price === null ? 'Preço não lido' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(props.property.price))
+const duplicateSummary = computed(() => props.property.duplicateMatches[0]?.reason ?? 'Este anúncio se parece com outro imóvel da lista.')
 
-const priceLabel = computed(() =>
-  props.property.price === null
-    ? 'Preço não lido'
-    : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(props.property.price),
-)
-
-watch(
-  () => props.property.note,
-  (value) => { note.value = value },
-)
-
-watch(
-  () => props.property.imageUrl,
-  () => { imageFailed.value = false },
-)
+watch(() => props.property.note, (value) => { note.value = value })
+watch(() => props.property.imageUrl, () => { imageFailed.value = false })
 
 function setRating(rating: Exclude<PropertyRating, null>) {
-  emit('review', {
-    id: props.property.id,
-    rating: props.property.rating === rating ? null : rating,
-    note: note.value.trim(),
-  })
+  emit('review', { id: props.property.id, rating: props.property.rating === rating ? null : rating, note: note.value.trim() })
 }
-
 function saveNote() {
   const cleanNote = note.value.trim()
-  if (cleanNote !== props.property.note) {
-    emit('review', { id: props.property.id, rating: props.property.rating, note: cleanNote })
-  }
+  if (cleanNote !== props.property.note) emit('review', { id: props.property.id, rating: props.property.rating, note: cleanNote })
 }
-
 function requestDelete() {
   if (window.confirm('Remover este imóvel da comparação?')) emit('delete', props.property.id)
 }
@@ -155,6 +89,9 @@ function requestDelete() {
 .media-link-hint { z-index: 1; right: 1rem; bottom: .85rem; color: var(--cream); font-size: .8rem; font-weight: 700; opacity: 0; transform: translateY(.35rem); transition: opacity .2s ease, transform .2s ease; }
 .media-link:hover .media-link-hint, .media-link:focus-visible .media-link-hint { opacity: 1; transform: translateY(0); }
 .media-fallback { color: var(--forest); background: linear-gradient(135deg, #e3ddcc, #d6dfd4); }
-.media-action { z-index: 2; color: var(--cream) !important; background: rgba(38, 48, 41, .55) !important; backdrop-filter: blur(6px); }
+.media-action { z-index: 3; color: var(--cream) !important; background: rgba(38, 48, 41, .55) !important; backdrop-filter: blur(6px); }
+.card-labels { z-index: 2; max-width: calc(100% - 4.5rem); }
+.rank-position { display: inline-flex; align-items: center; justify-content: center; min-width: 2.25rem; height: 2.25rem; padding: 0 .55rem; border-radius: 999px; color: var(--cream); background: var(--forest); font-family: var(--font-display); font-weight: 800; box-shadow: 0 5px 15px rgba(24, 34, 28, .2); }
+.duplicate-note { padding: .7rem .85rem; border: 1px dashed rgba(38, 112, 134, .32); border-radius: .85rem; color: #285f70; background: rgba(66, 151, 177, .08); }
 .tracking-wide { letter-spacing: .08em; }
 </style>

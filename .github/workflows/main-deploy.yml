@@ -22,6 +22,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_sqlite, curl, dom, mbstring, iconv
+
+      - name: Validate PHP API
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do php -l "$file"; done < <(find api -name '*.php' -print0)
+          php api/tests/integration.php
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -51,6 +64,7 @@ jobs:
 
           cp -R frontend/dist/. "$DEPLOY_DIR/"
           cp -R api/. "$DEPLOY_DIR/api/"
+          rm -rf "$DEPLOY_DIR/api/tests" "$DEPLOY_DIR/api/.spec"
           cp hostinger/imoveis.htaccess "$DEPLOY_DIR/.htaccess"
 
           printf '%s\n' "$GITHUB_SHA" > "$DEPLOY_DIR/deploy-check.txt"

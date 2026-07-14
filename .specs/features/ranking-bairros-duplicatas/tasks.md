@@ -1,0 +1,20 @@
+# Tarefas
+
+- [x] **T1 — Modularizar banco**
+  - Criar runner, migrations, seeds e serializers.
+  - Gate: banco existente abre e registra versões sem perder contagens.
+- [x] **T2 — Regras de ranking e duplicatas**
+  - Normalizar links, calcular score/bairro e gerar suspeitas explicadas.
+  - Gate: testes de integração cobrem `+1`, `-1`, muito ruim, tracking e proximidade.
+- [x] **T3 — Bairros desejados**
+  - Criar migration, CRUD e bônus de ranking.
+  - Gate: cadastro/remoção altera score após recarga.
+- [x] **T4 — Interface de imóveis**
+  - Criar toolbar, diálogo de bairros, filtros e badges nos cards.
+  - Gate: typecheck/build e comportamento por filtro.
+- [x] **T5 — Edição de móveis e Zoom**
+  - Criar PATCH, formulário create/edit, ação no card e fallback Zoom.
+  - Gate: editar/recarregar preserva dados; slug Zoom gera título útil.
+- [x] **T6 — Documentação e entrega**
+  - Atualizar README, estado, arquitetura e deploy.
+  - Gate: lint PHP, integração, typecheck, build e diff check.

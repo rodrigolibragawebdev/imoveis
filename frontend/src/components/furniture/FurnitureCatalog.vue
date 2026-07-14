@@ -7,18 +7,12 @@
       </div>
       <div class="flex flex-wrap gap-2">
         <Button label="Nova categoria" icon="pi pi-folder-plus" severity="secondary" outlined @click="categoryDialog = true" />
-        <Button label="Adicionar item" icon="pi pi-plus" @click="itemDialog = true" />
+        <Button label="Adicionar item" icon="pi pi-plus" @click="openCreate" />
       </div>
     </div>
 
     <div class="surface-card border-1 border-round-3xl p-3 md:p-4 catalog-panel">
-      <FurnitureFilters
-        :categories="store.categories"
-        :category-id="store.categoryId"
-        :sort="store.sort"
-        @change="store.setFilters($event.categoryId, $event.sort)"
-      />
-
+      <FurnitureFilters :categories="store.categories" :category-id="store.categoryId" :sort="store.sort" @change="store.setFilters($event.categoryId, $event.sort)" />
       <Message v-if="store.error" severity="error" class="mb-4">{{ store.error }}</Message>
 
       <div v-if="store.loading" class="grid">
@@ -26,7 +20,7 @@
       </div>
       <div v-else-if="store.items.length" class="grid">
         <div v-for="item in store.items" :key="item.id" class="col-12 sm:col-6 lg:col-4 xl:col-3">
-          <FurnitureCard :item="item" @delete="removeItem" />
+          <FurnitureCard :item="item" @edit="openEdit" @delete="removeItem" />
         </div>
       </div>
       <div v-else class="text-center py-7">
@@ -37,12 +31,12 @@
     </div>
 
     <CategoryForm v-model="categoryDialog" :saving="store.saving" @submit="createCategory" />
-    <FurnitureItemForm v-model="itemDialog" :categories="store.categories" :saving="store.saving" @submit="createItem" />
+    <FurnitureItemForm v-model="itemDialog" :categories="store.categories" :saving="store.saving" :item="editingItem" @submit="saveItem" />
   </section>
 </template>
 
 <script setup lang="ts">
-import { onMounted, shallowRef } from 'vue'
+import { onMounted, shallowRef, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
@@ -52,13 +46,26 @@ import FurnitureCard from './FurnitureCard.vue'
 import FurnitureFilters from './FurnitureFilters.vue'
 import FurnitureItemForm from './FurnitureItemForm.vue'
 import { useFurnitureStore } from '@/stores/furniture'
+import type { FurnitureItem, FurnitureItemInput } from '@/types'
 
 const store = useFurnitureStore()
 const toast = useToast()
 const categoryDialog = shallowRef(false)
 const itemDialog = shallowRef(false)
+const editingItem = shallowRef<FurnitureItem | null>(null)
 
 onMounted(store.initialize)
+watch(itemDialog, (isOpen) => { if (!isOpen) editingItem.value = null })
+
+function openCreate() {
+  editingItem.value = null
+  itemDialog.value = true
+}
+
+function openEdit(item: FurnitureItem) {
+  editingItem.value = item
+  itemDialog.value = true
+}
 
 async function createCategory(payload: { name: string; color: string }) {
   try {
@@ -70,13 +77,20 @@ async function createCategory(payload: { name: string; color: string }) {
   }
 }
 
-async function createItem(payload: { categoryId: number; url: string; title?: string; price?: number }) {
+async function saveItem(payload: FurnitureItemInput) {
   try {
-    await store.addItem(payload)
+    const wasEditing = Boolean(editingItem.value)
+    if (editingItem.value) await store.updateItem(editingItem.value.id, payload)
+    else await store.addItem(payload)
     itemDialog.value = false
-    toast.add({ severity: 'success', summary: 'Item adicionado', detail: 'O card já está na lista.', life: 2800 })
+    toast.add({
+      severity: 'success',
+      summary: wasEditing ? 'Item atualizado' : 'Item adicionado',
+      detail: wasEditing ? 'As alterações já aparecem no card.' : 'O card já está na lista.',
+      life: 2800,
+    })
   } catch {
-    toast.add({ severity: 'error', summary: 'Não foi possível adicionar', detail: store.error, life: 4500 })
+    toast.add({ severity: 'error', summary: 'Não foi possível salvar', detail: store.error, life: 4500 })
   }
 }
 
@@ -94,4 +108,3 @@ async function removeItem(id: number) {
 .eyebrow { letter-spacing: .14em; }
 .catalog-panel { border-color: var(--line) !important; box-shadow: 0 18px 54px rgba(54, 82, 68, .07); }
 </style>
-
