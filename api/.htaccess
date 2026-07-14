@@ -3,7 +3,8 @@ Options -Indexes
 DirectoryIndex index.php
 
 # Somente o ponto de entrada da API pode ser acessado pela web.
-RewriteRule ^(?:bootstrap|database|preview)\.php$ - [F,L,NC]
+RewriteRule ^(?:bootstrap|database|preview|propertyData|ranking|seed|serializers)\.php$ - [F,L,NC]
+RewriteRule ^(?:migrations|tests|\.spec)(?:/|$) - [F,L,NC]
 
 # Rotas como /api/properties são encaminhadas ao router PHP.
 RewriteCond %{REQUEST_FILENAME} !-f

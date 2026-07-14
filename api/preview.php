@@ -21,6 +21,10 @@ function propertyUrlMetadata(string $url): array
         }
     }
 
+    if (str_ends_with($source, 'zoom.com.br') && !in_array($segments[0] ?? '', ['busca', 'search'], true)) {
+        return parseZoomSlug($slug, $source);
+    }
+
     if (str_ends_with($source, 'vivareal.com.br')) {
         $parsed = parseVivaRealSlug($slug, $source);
         if ($parsed !== null) {
@@ -41,6 +45,44 @@ function propertyUrlMetadata(string $url): array
     }
 
     return genericSlugMetadata($slug, $source);
+}
+
+function parseZoomSlug(string $slug, string $source): array
+{
+    $acronyms = [
+        'tv' => 'TV',
+        'qd' => 'QD',
+        'qled' => 'QLED',
+        'oled' => 'OLED',
+        'led' => 'LED',
+        'tcl' => 'TCL',
+        'lg' => 'LG',
+        'uhd' => 'UHD',
+        'hdr' => 'HDR',
+        '4k' => '4K',
+        '8k' => '8K',
+    ];
+    $words = array_values(array_filter(explode('-', strtolower($slug))));
+    $isTelevision = in_array('tv', $words, true);
+    $formatted = array_map(static function (string $word) use ($acronyms, $isTelevision): string {
+        if (isset($acronyms[$word])) {
+            return $acronyms[$word];
+        }
+        if ($isTelevision && preg_match('/^\d{2,3}$/', $word) === 1) {
+            return $word . '"';
+        }
+        if (preg_match('/^(?=.*\d)(?=.*[a-z])[a-z0-9]+$/i', $word) === 1) {
+            return strtoupper($word);
+        }
+        return mb_strtoupper(mb_substr($word, 0, 1)) . mb_substr($word, 1);
+    }, $words);
+    $title = str_replace('QD Mini', 'QD-Mini', implode(' ', $formatted));
+
+    return [
+        'title' => mb_strlen($title) >= 8 ? mb_substr($title, 0, 180) : "Produto no {$source}",
+        'price' => null,
+        'location' => null,
+    ];
 }
 
 function humanizeSlug(string $value): string
@@ -436,6 +478,39 @@ function productImage(mixed $image): ?string
     return null;
 }
 
+function offerPriceValue(mixed $offers): mixed
+{
+    if (!is_array($offers)) {
+        return null;
+    }
+    foreach (['lowPrice', 'price'] as $key) {
+        if (isset($offers[$key]) && (is_string($offers[$key]) || is_numeric($offers[$key]))) {
+            return $offers[$key];
+        }
+    }
+    if (array_is_list($offers)) {
+        $prices = [];
+        foreach ($offers as $offer) {
+            $price = parsePreviewPrice(offerPriceValue($offer));
+            if ($price !== null) {
+                $prices[] = $price;
+            }
+        }
+        return $prices !== [] ? min($prices) : null;
+    }
+    return null;
+}
+
+function zoomPriceFromHtml(string $html): ?float
+{
+    $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+    if (preg_match('/menor pre[cç]o.{0,220}?R\$\s*([\d.]+,\d{2})/iu', $text, $match) !== 1) {
+        return null;
+    }
+    return parsePreviewPrice($match[1]);
+}
+
 /** @return array{url: string, title: string, imageUrl: ?string, price: ?float, source: string, location: ?string} */
 function linkPreview(string $url): array
 {
@@ -468,8 +543,11 @@ function linkPreview(string $url): array
         $rawImage = metaContent($xpath, 'og:image')
             ?? metaContent($xpath, 'twitter:image')
             ?? productImage($product['image'] ?? null);
-        $offers = isset($product['offers']) && is_array($product['offers']) ? $product['offers'] : [];
-        $rawPrice = metaContent($xpath, 'product:price:amount') ?? ($offers['price'] ?? null);
+        $offers = $product['offers'] ?? [];
+        $rawPrice = metaContent($xpath, 'product:price:amount') ?? offerPriceValue($offers);
+        if ($rawPrice === null && str_ends_with($source, 'zoom.com.br')) {
+            $rawPrice = zoomPriceFromHtml($response['html']);
+        }
         $location = metaContent($xpath, 'og:locality') ?? $fallback['location'];
         $imageUrl = null;
         if (is_string($rawImage) && trim($rawImage) !== '') {
