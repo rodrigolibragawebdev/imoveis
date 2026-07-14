@@ -54,6 +54,7 @@ jobs:
           cp hostinger/env.example "$DEPLOY_DIR/.env.example"
 
           npm install --package-lock-only --ignore-scripts --omit=dev --prefix "$DEPLOY_DIR"
+          printf '%s\n' "$GITHUB_SHA" > "$DEPLOY_DIR/deploy-check.txt"
           touch "$DEPLOY_DIR/.nojekyll"
 
       - name: Publish hostinger-deploy branch
