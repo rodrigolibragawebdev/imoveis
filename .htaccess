@@ -1,0 +1,14 @@
+RewriteEngine On
+Options -Indexes
+DirectoryIndex index.html
+
+# Mantém a API fora do fallback do Vue Router.
+RewriteRule ^api(?:/|$) - [L,NC]
+
+# Entrega normalmente arquivos e diretórios existentes.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Fallback para acessos diretos às rotas do Vue.
+RewriteRule ^ index.html [L]
