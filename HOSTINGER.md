@@ -6,28 +6,25 @@ Este projeto usa apenas o fluxo de produção:
 push em main
   -> typecheck
   -> build do backend e frontend
-  -> publica artefato em hostinger-deploy
-  -> Hostinger faz o redeploy da aplicação Node.js
+  -> publica o frontend estático em hostinger-deploy
+  -> Hostinger atualiza public_html/imoveis
 ```
 
-## Configuração da aplicação
+## Configuração do frontend
 
-Na Hostinger, crie uma **Node.js Web App** conectada a este repositório e use:
+No Git Deploy da Hostinger, use:
 
 - Branch: `hostinger-deploy`
-- Node.js: `22.x`
-- Entry file: `dist/server.js`
-- Start command: `npm start`
-- Build command: `npm run build`
+- Diretório: `/imoveis`
 
-Cadastre no hPanel as variáveis de [hostinger/env.example](hostinger/env.example). Use um caminho absoluto e persistente para `DATABASE_PATH`, fora do diretório de build, para que o SQLite não seja apagado em redeploys.
+O artefato coloca `index.html`, `assets/` e `.htaccess` diretamente nessa pasta. Configure a variável `VITE_API_URL` em **GitHub → Settings → Actions → Variables** com a URL pública do backend Express. Enquanto ela não existir, o build usa `/imoveis/api`.
+
+O backend Express precisa ser publicado separadamente como **Node.js Web App**. Cadastre no hPanel as variáveis de [hostinger/env.example](hostinger/env.example) e use um caminho absoluto e persistente para `DATABASE_PATH`, fora do diretório de build, para que o SQLite não seja apagado em redeploys.
 
 ## Preservar o projeto em `/games`
 
-Backends Node.js ficam fora de `public_html`, e a Hostinger gera um `.htaccess` em `public_html/.htaccess` para encaminhar requisições ao processo Node.
+Use o conteúdo de [hostinger/public-html.htaccess](hostinger/public-html.htaccess) em `public_html/.htaccess`. A pasta `/imoveis` também recebe seu próprio arquivo, disponível em [hostinger/imoveis.htaccess](hostinger/imoveis.htaccess).
 
-Antes das regras de proxy geradas pela Hostinger, adicione o conteúdo de [hostinger/public-html-games.htaccess](hostinger/public-html-games.htaccess). Essa exceção mantém `public_html/games` sendo atendido diretamente pelo Apache.
+Faça backup de `public_html/games` e do `.htaccess` da raiz antes de substituir qualquer regra.
 
-Faça backup de `public_html/games` e do `.htaccess` antes de conectar o domínio à aplicação Node. A Hostinger pode regenerar o `.htaccess` durante um redeploy; depois de cada alteração da configuração do app, confirme que a exceção de `/games` continua acima das regras de proxy.
-
-O Express serve o frontend compilado e também responde pelo fallback do Vue Router, portanto acessos diretos a `/imoveis`, `/casa` e `/dicas` continuam funcionando.
+O `.htaccess` dentro de `/imoveis` responde pelo fallback do Vue Router, portanto acessos diretos a `/imoveis/casa` e `/imoveis/dicas` continuam funcionando.

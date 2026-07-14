@@ -2,7 +2,7 @@
   <div class="min-h-screen shell">
     <header class="sticky top-0 z-5 px-3 md:px-5 py-3 shell-header">
       <div class="max-w-7xl mx-auto flex align-items-center justify-content-between gap-3">
-        <RouterLink to="/imoveis" class="flex align-items-center gap-3 no-underline text-ink">
+        <RouterLink to="/" class="flex align-items-center gap-3 no-underline text-ink">
           <span class="brand-mark flex align-items-center justify-content-center">
             <i class="pi pi-home text-xl" />
           </span>
@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 const navigation = [
-  { to: '/imoveis', label: 'Imóveis', icon: 'pi pi-building' },
+  { to: '/', label: 'Imóveis', icon: 'pi pi-building' },
   { to: '/casa', label: 'Lista da casa', icon: 'pi pi-list-check' },
   { to: '/dicas', label: 'Dicas', icon: 'pi pi-compass' },
 ]
@@ -66,4 +66,3 @@ const navigation = [
 .nav-link:hover { color: var(--ink); background: rgba(255, 250, 240, .7); }
 .nav-link.router-link-active { color: var(--cream); background: var(--forest); box-shadow: 0 5px 16px rgba(54, 82, 68, .18); }
 </style>
-

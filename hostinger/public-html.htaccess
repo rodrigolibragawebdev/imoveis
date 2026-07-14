@@ -1,14 +1,15 @@
 RewriteEngine On
 Options -Indexes
 
+# A raiz do domínio continua abrindo o projeto /games.
 # Durante os testes use 302. Troque para 301 quando a rota estiver confirmada.
-RewriteRule ^$ /imoveis/ [R=302,L]
+RewriteRule ^$ /games/ [R=302,L]
 
 # Normaliza as duas pastas para URLs com barra final.
 RewriteRule ^games$ /games/ [R=302,L]
 RewriteRule ^imoveis$ /imoveis/ [R=302,L]
 
-# Não envia chamadas de API para os fallbacks das SPAs.
+# Não envia APIs para os fallbacks das SPAs.
 RewriteRule ^(?:api|games/api|imoveis/api)(?:/|$) - [L,NC]
 
 # Entrega normalmente arquivos e diretórios existentes.

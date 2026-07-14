@@ -1,12 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior: () => ({ top: 0 }),
   routes: [
-    { path: '/', redirect: '/imoveis' },
     {
-      path: '/imoveis',
+      path: '/',
       name: 'properties',
       component: () => import('@/views/PropertiesView.vue'),
       meta: { title: 'Avaliação de imóveis' },
@@ -23,11 +22,10 @@ export const router = createRouter({
       component: () => import('@/views/TipsView.vue'),
       meta: { title: 'Dicas para comprar' },
     },
-    { path: '/:pathMatch(.*)*', redirect: '/imoveis' },
+    { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
 
 router.afterEach((to) => {
   document.title = `${String(to.meta.title ?? 'Início')} · Casa em Pauta`
 })
-

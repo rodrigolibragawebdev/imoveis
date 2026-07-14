@@ -37,23 +37,21 @@ jobs:
 
       - name: Build application
         env:
-          VITE_API_URL: /api
+          VITE_APP_BASE_PATH: /imoveis/
+          VITE_API_URL: ${{ vars.VITE_API_URL || '/imoveis/api' }}
         run: npm run build
 
-      - name: Prepare Hostinger artifact
+      - name: Prepare Hostinger frontend artifact
         shell: bash
         run: |
           set -euo pipefail
 
           DEPLOY_DIR=.deploy-root
-          mkdir -p "$DEPLOY_DIR/dist" "$DEPLOY_DIR/public"
+          mkdir -p "$DEPLOY_DIR"
 
-          cp -R backend/dist/. "$DEPLOY_DIR/dist/"
-          cp -R frontend/dist/. "$DEPLOY_DIR/public/"
-          cp hostinger/package.json "$DEPLOY_DIR/package.json"
-          cp hostinger/env.example "$DEPLOY_DIR/.env.example"
+          cp -R frontend/dist/. "$DEPLOY_DIR/"
+          cp hostinger/imoveis.htaccess "$DEPLOY_DIR/.htaccess"
 
-          npm install --package-lock-only --ignore-scripts --omit=dev --prefix "$DEPLOY_DIR"
           printf '%s\n' "$GITHUB_SHA" > "$DEPLOY_DIR/deploy-check.txt"
           touch "$DEPLOY_DIR/.nojekyll"
 

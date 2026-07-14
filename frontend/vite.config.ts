@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, fileURLToPath(new URL('..', import.meta.url)), '')
 
   return {
+    base: env.VITE_APP_BASE_PATH ?? '/',
     envDir: '..',
     plugins: [vue()],
     resolve: {
