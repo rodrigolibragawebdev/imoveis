@@ -5,7 +5,7 @@ Este projeto usa apenas o fluxo de produção:
 ```text
 push em main
   -> typecheck
-  -> build do backend e frontend
+  -> build do frontend
   -> publica frontend e API PHP em hostinger-deploy
   -> Hostinger atualiza public_html/imoveis
 ```
@@ -28,6 +28,8 @@ A produção usa PHP 8.2 e SQLite, sem um segundo deploy. Ative as extensões `p
 ```
 
 Essa pasta fica fora de `public_html`, portanto o banco não é publicado nem apagado pelo auto deploy. O usuário do PHP precisa ter permissão de escrita em `imoveis-data`; normalmente a pasta é criada automaticamente no primeiro acesso.
+
+Não copie o `.env` local para a produção. Os padrões de produção já usam `https://www.toolsfera.com` e o caminho persistente acima. Se precisar sobrescrevê-los pelo ambiente do servidor, use o modelo [hostinger/env.example](hostinger/env.example).
 
 Depois do deploy, confirme que `https://www.toolsfera.com/imoveis/api/health` e `https://www.toolsfera.com/imoveis/api/properties` respondem com JSON.
 

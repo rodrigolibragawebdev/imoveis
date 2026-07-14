@@ -10,7 +10,7 @@
 - **REQ-06**: filtrar itens por categoria e ordenar por preço.
 - **REQ-07**: iniciar o catálogo com categorias e itens essenciais.
 - **REQ-08**: reservar uma view para dicas de compra de imóvel.
-- **REQ-09**: persistir dados em SQLite por uma API MVC.
+- **REQ-09**: persistir dados em SQLite por uma API PHP no mesmo deploy do frontend.
 
 ## Critérios de aceite
 
@@ -18,4 +18,3 @@
 - Os filtros não alteram ou duplicam os dados persistidos.
 - Falha ao extrair um site não impede o cadastro do link.
 - A interface funciona em telas móveis e desktop.
-

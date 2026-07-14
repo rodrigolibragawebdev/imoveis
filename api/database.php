@@ -15,6 +15,11 @@ function database(): PDO
 
     $defaultPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'imoveis-data' . DIRECTORY_SEPARATOR . 'casa-em-pauta.sqlite';
     $databasePath = (string) (getenv('IMOVEIS_DATABASE_PATH') ?: $defaultPath);
+    $isAbsolutePath = str_starts_with($databasePath, DIRECTORY_SEPARATOR)
+        || preg_match('/^[A-Za-z]:[\\\\\/]/', $databasePath) === 1;
+    if (!$isAbsolutePath) {
+        $databasePath = dirname(__DIR__) . DIRECTORY_SEPARATOR . ltrim($databasePath, './\\');
+    }
     $directory = dirname($databasePath);
 
     if (!is_dir($directory) && !mkdir($directory, 0700, true) && !is_dir($directory)) {

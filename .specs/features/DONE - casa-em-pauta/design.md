@@ -2,7 +2,7 @@
 
 ## API
 
-Rotas Express → controllers → services → repositories → SQLite. DTOs Zod validam entrada nos limites HTTP. O serviço de preview extrai Open Graph, JSON-LD e metadados comuns, mas mantém fallback baseado no domínio.
+O router PHP valida as entradas, executa consultas preparadas via PDO e persiste em SQLite. O preview extrai Open Graph, JSON-LD e metadados comuns, mas mantém fallback baseado no domínio e na URL quando o portal bloqueia a consulta.
 
 ## Frontend
 
@@ -19,4 +19,3 @@ Views de rota são superfícies de composição. Stores Pinia cuidam de carregam
 - `FurnitureFilters`: emite filtro e ordenação.
 - `FurnitureCard`: apresenta item e ação de remoção.
 - `TipsView`: compõe conteúdo editorial futuro.
-

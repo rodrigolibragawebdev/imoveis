@@ -3,22 +3,21 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "backend",
     "frontend"
   ],
   "scripts": {
-    "dev": "concurrently -n API,WEB -c yellow,green \"npm run dev -w backend\" \"npm run dev -w frontend\"",
-    "build": "npm run build -w backend && npm run build -w frontend",
-    "typecheck": "npm run typecheck -w backend && npm run typecheck -w frontend",
-    "db:seed": "npm run db:seed -w backend",
-    "start": "npm run start -w backend"
+    "dev": "concurrently -n API,WEB -c yellow,green \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "php -S localhost:4272 -t api api/index.php",
+    "dev:web": "npm run dev -w frontend",
+    "build": "npm run build -w frontend",
+    "typecheck": "npm run typecheck -w frontend",
+    "preview": "npm run preview -w frontend"
   },
   "engines": {
     "node": ">=22 <25"
   },
   "devDependencies": {
-    "concurrently": "latest",
-    "typescript": "~5.9.3"
+    "concurrently": "^10.0.3"
   },
   "overrides": {
     "typescript": "~5.9.3"

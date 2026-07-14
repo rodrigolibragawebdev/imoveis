@@ -1,7 +1,7 @@
 # Tarefas
 
-- [x] Criar schema, conexão, repositories e seed SQLite.
-- [x] Criar DTOs, serviços, controllers e rotas MVC.
+- [x] Criar schema, conexão PDO e dados iniciais no SQLite.
+- [x] Criar validação e rotas na API PHP.
 - [x] Implementar extração segura de preview de links.
 - [x] Configurar Vue, PrimeVue, Router, Pinia e shell.
 - [x] Implementar comparador de imóveis.
