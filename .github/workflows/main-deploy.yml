@@ -1,0 +1,65 @@
+name: Main Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    name: Validate, Build and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build application
+        env:
+          VITE_API_URL: /api
+        run: npm run build
+
+      - name: Prepare Hostinger artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DEPLOY_DIR=.deploy-root
+          mkdir -p "$DEPLOY_DIR/dist" "$DEPLOY_DIR/public"
+
+          cp -R backend/dist/. "$DEPLOY_DIR/dist/"
+          cp -R frontend/dist/. "$DEPLOY_DIR/public/"
+          cp hostinger/package.json "$DEPLOY_DIR/package.json"
+          cp hostinger/env.example "$DEPLOY_DIR/.env.example"
+
+          npm install --package-lock-only --ignore-scripts --omit=dev --prefix "$DEPLOY_DIR"
+          touch "$DEPLOY_DIR/.nojekyll"
+
+      - name: Publish hostinger-deploy branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: hostinger-deploy
+          folder: .deploy-root
+          clean: true
+          commit-message: "Deploy ${{ github.sha }}"

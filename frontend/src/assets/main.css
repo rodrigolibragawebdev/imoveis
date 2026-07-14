@@ -1,0 +1,41 @@
+:root {
+  font-family: 'Manrope Variable', sans-serif;
+  color: #263029;
+  background: #f4efe4;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --paper: #f4efe4;
+  --ink: #263029;
+  --forest: #365244;
+  --terracotta: #b65c3a;
+  --cream: #fffaf0;
+  --line: rgba(54, 82, 68, 0.16);
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; background: var(--paper); }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--paper); }
+button, input, textarea, select { font: inherit; }
+a { color: inherit; }
+.display-font { font-family: 'Fraunces Variable', serif; }
+.text-ink { color: var(--ink); }
+.text-forest { color: var(--forest); }
+.text-terracotta { color: var(--terracotta); }
+.bg-cream { background: var(--cream); }
+.surface-card { background: rgba(255, 250, 240, 0.88) !important; }
+.max-w-7xl { max-width: 80rem; }
+.object-cover { object-fit: cover; }
+
+.p-button { font-weight: 700; }
+.p-button-primary { background: var(--forest); border-color: var(--forest); }
+.p-inputtext:focus, .p-select:focus { border-color: var(--terracotta) !important; box-shadow: 0 0 0 .2rem rgba(182, 92, 58, .12) !important; }
+
+::selection { background: rgba(182, 92, 58, .22); color: var(--ink); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .route-enter-active { animation: page-in .38s ease-out; }
+  @keyframes page-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}

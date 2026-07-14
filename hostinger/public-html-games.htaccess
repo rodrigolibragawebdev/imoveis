@@ -1,0 +1,6 @@
+# Insira estas regras ANTES das regras de proxy Node.js geradas pela Hostinger.
+# Elas mantêm o projeto existente em public_html/games fora do proxy da aplicação.
+
+RewriteEngine On
+RewriteCond %{REQUEST_URI} ^/games(?:/|$) [NC]
+RewriteRule ^ - [L]

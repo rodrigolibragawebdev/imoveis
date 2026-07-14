@@ -1,0 +1,26 @@
+{
+  "name": "casa-em-pauta",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n API,WEB -c yellow,green \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "typecheck": "npm run typecheck -w backend && npm run typecheck -w frontend",
+    "db:seed": "npm run db:seed -w backend",
+    "start": "npm run start -w backend"
+  },
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "devDependencies": {
+    "concurrently": "latest",
+    "typescript": "~5.9.3"
+  },
+  "overrides": {
+    "typescript": "~5.9.3"
+  }
+}

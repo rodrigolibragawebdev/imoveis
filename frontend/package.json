@@ -1,0 +1,32 @@
+{
+  "name": "@casa-em-pauta/frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "typecheck": "vue-tsc -b --pretty false",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/fraunces": "latest",
+    "@fontsource-variable/manrope": "latest",
+    "@primeuix/themes": "latest",
+    "axios": "latest",
+    "pinia": "latest",
+    "primeflex": "latest",
+    "primeicons": "latest",
+    "primevue": "latest",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "latest",
+    "@types/node": "latest",
+    "@vitejs/plugin-vue": "latest",
+    "typescript": "~5.9.3",
+    "vite": "latest",
+    "vue-tsc": "latest"
+  }
+}
