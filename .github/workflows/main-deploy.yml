@@ -38,18 +38,19 @@ jobs:
       - name: Build application
         env:
           VITE_APP_BASE_PATH: /imoveis/
-          VITE_API_URL: ${{ vars.VITE_API_URL || '/imoveis/api' }}
+          VITE_API_URL: /imoveis/api
         run: npm run build
 
-      - name: Prepare Hostinger frontend artifact
+      - name: Prepare Hostinger artifact
         shell: bash
         run: |
           set -euo pipefail
 
           DEPLOY_DIR=.deploy-root
-          mkdir -p "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR/api"
 
           cp -R frontend/dist/. "$DEPLOY_DIR/"
+          cp -R api/. "$DEPLOY_DIR/api/"
           cp hostinger/imoveis.htaccess "$DEPLOY_DIR/.htaccess"
 
           printf '%s\n' "$GITHUB_SHA" > "$DEPLOY_DIR/deploy-check.txt"
