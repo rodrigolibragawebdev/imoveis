@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "concurrently -n API,WEB -c yellow,green \"npm run dev:api\" \"npm run dev:web\"",
-    "dev:api": "php -S localhost:4272 -t api api/index.php",
+    "dev:api": "php -S localhost:5177 -t api api/index.php",
     "dev:web": "npm run dev -w frontend",
     "build": "npm run build -w frontend",
     "typecheck": "npm run typecheck -w frontend",

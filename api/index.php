@@ -389,6 +389,61 @@ try {
         sendJson(array_map('mapTip', $rows));
     }
 
+    if ($method === 'GET' && $path === '/financing-simulations') {
+        $rows = $database->query('SELECT * FROM financing_simulations ORDER BY created_at DESC, id DESC')->fetchAll();
+        sendJson(array_map('mapFinancingSimulation', $rows));
+    }
+
+    if ($method === 'POST' && $path === '/financing-simulations') {
+        $body = jsonBody();
+        $name = cleanText($body['name'] ?? null, 'name', 2, 80);
+        $propertyValue = positiveNumber($body['propertyValue'] ?? null, 'propertyValue');
+        $downPayment = nonNegativeNumber($body['downPayment'] ?? 0, 'downPayment');
+        $financedAmount = positiveNumber($body['financedAmount'] ?? null, 'financedAmount');
+        $annualRate = positiveNumber($body['annualRate'] ?? null, 'annualRate', 100);
+        $termMonths = positiveInteger($body['termMonths'] ?? null, 'termMonths');
+        if ($termMonths > 600) {
+            throw new ApiException('O campo termMonths informado é inválido');
+        }
+        $system = $body['system'] ?? null;
+        if (!in_array($system, ['price', 'sac'], true)) {
+            throw new ApiException('O sistema de amortização precisa ser "price" ou "sac"');
+        }
+        $lender = cleanText($body['lender'] ?? null, 'lender', 2, 60);
+        $firstInstallment = positiveNumber($body['firstInstallment'] ?? null, 'firstInstallment');
+        $lastInstallment = positiveNumber($body['lastInstallment'] ?? null, 'lastInstallment');
+        $totalPaid = positiveNumber($body['totalPaid'] ?? null, 'totalPaid', 1_000_000_000);
+        $totalInterest = nonNegativeNumber($body['totalInterest'] ?? null, 'totalInterest', 1_000_000_000);
+
+        $insert = $database->prepare(<<<'SQL'
+            INSERT INTO financing_simulations (
+                name, property_value, down_payment, financed_amount, annual_rate, term_months,
+                system, lender, first_installment, last_installment, total_paid, total_interest
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            SQL);
+        $insert->execute([
+            $name, $propertyValue, $downPayment, $financedAmount, $annualRate, $termMonths,
+            $system, $lender, $firstInstallment, $lastInstallment, $totalPaid, $totalInterest,
+        ]);
+
+        $find = $database->prepare('SELECT * FROM financing_simulations WHERE id = ?');
+        $find->execute([(int) $database->lastInsertId()]);
+        $simulation = $find->fetch();
+        if (!is_array($simulation)) {
+            throw new RuntimeException('Não foi possível criar a simulação');
+        }
+        sendJson(mapFinancingSimulation($simulation), 201);
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/financing-simulations/(?<id>\d+)$#', $path, $match) === 1) {
+        $delete = $database->prepare('DELETE FROM financing_simulations WHERE id = ?');
+        $delete->execute([positiveInteger($match['id'], 'id')]);
+        if ($delete->rowCount() === 0) {
+            throw new ApiException('Simulação não encontrada', 404);
+        }
+        sendNoContent();
+    }
+
     throw new ApiException('Rota não encontrada', 404);
 } catch (ApiException $error) {
     sendJson(['message' => $error->getMessage()], $error->status);

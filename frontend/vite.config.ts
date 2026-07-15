@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '0.0.0.0',
-      port: Number(env.FRONTEND_PORT ?? 4271),
+      port: Number(env.FRONTEND_PORT ?? 5176),
       strictPort: true,
     },
   }

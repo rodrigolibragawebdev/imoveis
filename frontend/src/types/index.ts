@@ -73,3 +73,37 @@ export interface Tip {
   content: string
   sortOrder: number
 }
+
+export type AmortizationSystem = 'price' | 'sac'
+
+export interface FinancingSimulation {
+  id: number
+  name: string
+  propertyValue: number
+  downPayment: number
+  financedAmount: number
+  annualRate: number
+  termMonths: number
+  system: AmortizationSystem
+  lender: string
+  firstInstallment: number
+  lastInstallment: number
+  totalPaid: number
+  totalInterest: number
+  createdAt: string
+}
+
+export interface FinancingSimulationInput {
+  name: string
+  propertyValue: number
+  downPayment: number
+  financedAmount: number
+  annualRate: number
+  termMonths: number
+  system: AmortizationSystem
+  lender: string
+  firstInstallment: number
+  lastInstallment: number
+  totalPaid: number
+  totalInterest: number
+}

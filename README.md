@@ -28,9 +28,9 @@ npm run dev
 
 O projeto possui um `.env` local sem segredos. Para recriá-lo, copie `.env.example` para `.env`.
 
-- Frontend: `http://localhost:4271`
-- API: `http://localhost:4272/api`
-- Health check: `http://localhost:4272/api/health`
+- Frontend: `http://localhost:5176`
+- API: `http://localhost:5177/api`
+- Health check: `http://localhost:5177/api/health`
 
 O banco local fica em `data/casa-em-pauta.sqlite`. As migrations e os dados iniciais são aplicados automaticamente no primeiro acesso à API, sem recriar nem apagar os registros existentes.
 

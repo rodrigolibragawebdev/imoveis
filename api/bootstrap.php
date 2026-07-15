@@ -194,3 +194,27 @@ function optionalPrice(mixed $value): ?float
     }
     return $price;
 }
+
+function positiveNumber(mixed $value, string $field, float $max = 100_000_000): float
+{
+    if (!is_numeric($value)) {
+        throw new ApiException("O campo {$field} precisa ser um número");
+    }
+    $number = (float) $value;
+    if (!is_finite($number) || $number <= 0 || $number > $max) {
+        throw new ApiException("O campo {$field} informado é inválido");
+    }
+    return $number;
+}
+
+function nonNegativeNumber(mixed $value, string $field, float $max = 100_000_000): float
+{
+    if (!is_numeric($value)) {
+        throw new ApiException("O campo {$field} precisa ser um número");
+    }
+    $number = (float) $value;
+    if (!is_finite($number) || $number < 0 || $number > $max) {
+        throw new ApiException("O campo {$field} informado é inválido");
+    }
+    return $number;
+}

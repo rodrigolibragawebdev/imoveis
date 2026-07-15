@@ -72,3 +72,24 @@ function mapTip(array $row): array
         'sortOrder' => (int) $row['sort_order'],
     ];
 }
+
+/** @param array<string, mixed> $row */
+function mapFinancingSimulation(array $row): array
+{
+    return [
+        'id' => (int) $row['id'],
+        'name' => (string) $row['name'],
+        'propertyValue' => (float) $row['property_value'],
+        'downPayment' => (float) $row['down_payment'],
+        'financedAmount' => (float) $row['financed_amount'],
+        'annualRate' => (float) $row['annual_rate'],
+        'termMonths' => (int) $row['term_months'],
+        'system' => (string) $row['system'],
+        'lender' => (string) $row['lender'],
+        'firstInstallment' => (float) $row['first_installment'],
+        'lastInstallment' => (float) $row['last_installment'],
+        'totalPaid' => (float) $row['total_paid'],
+        'totalInterest' => (float) $row['total_interest'],
+        'createdAt' => (string) $row['created_at'],
+    ];
+}
