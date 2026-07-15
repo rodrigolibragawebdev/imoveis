@@ -19,6 +19,10 @@ function expect(bool $condition, string $message): void
 }
 
 try {
+    $migrationFiles = glob(dirname(__DIR__) . '/migrations/*.php');
+    expect($migrationFiles !== false, 'As migrations devem ser localizadas');
+    $expectedMigrationCount = count($migrationFiles);
+
     $database = new PDO('sqlite:' . $databasePath, null, null, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -27,12 +31,18 @@ try {
     $database->exec('PRAGMA foreign_keys = ON');
     runMigrations($database);
     seedDatabase($database);
-    expect((int) $database->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn() === 3, 'As três migrations devem ser aplicadas');
+    expect(
+        (int) $database->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn() === $expectedMigrationCount,
+        'Todas as migrations devem ser aplicadas',
+    );
     expect((int) $database->query('SELECT COUNT(*) FROM furniture_categories')->fetchColumn() === 5, 'O seed deve criar cinco categorias');
     expect((int) $database->query('SELECT COUNT(*) FROM furniture_items')->fetchColumn() === 11, 'O seed deve criar onze móveis');
 
     runMigrations($database);
-    expect((int) $database->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn() === 3, 'As migrations precisam ser idempotentes');
+    expect(
+        (int) $database->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn() === $expectedMigrationCount,
+        'As migrations precisam ser idempotentes',
+    );
 
     $database->prepare('INSERT INTO preferred_neighborhoods (name, normalized_name) VALUES (?, ?)')->execute(['Centro', 'centro']);
     $insert = $database->prepare(<<<'SQL'
