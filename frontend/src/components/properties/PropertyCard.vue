@@ -80,16 +80,16 @@
 			</div>
 
 			<div
-				class="flex flex-column md:flex-row justify-content-between align-items-start gap-3 mb-2"
+				class="flex flex-column justify-content-between align-items-start gap-3 mb-2"
 			>
 				<h2
-					class="display-font text-2xl line-height-2 m-0 text-ink flex-order-1 md:flex-order-0"
+					class="display-font text-2xl line-height-2 m-0 text-ink flex-order-1"
 					:title="property.title"
 				>
 					{{ property.title }}
 				</h2>
 				<span
-					class="font-bold text-terracotta white-space-nowrap flex-order-0 md:flex-order-1"
+					class="font-bold text-terracotta white-space-nowrap flex-order-0"
 					>{{ priceLabel }}</span
 				>
 			</div>
