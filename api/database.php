@@ -4,6 +4,39 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/seed.php';
 
+function databasePath(): string
+{
+    static $path = null;
+    if ($path !== null) {
+        return $path;
+    }
+
+    $defaultPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'imoveis-data' . DIRECTORY_SEPARATOR . 'casa-em-pauta.sqlite';
+    $databasePath = (string) (getenv('IMOVEIS_DATABASE_PATH') ?: $defaultPath);
+    $isAbsolutePath = str_starts_with($databasePath, DIRECTORY_SEPARATOR)
+        || preg_match('/^[A-Za-z]:[\\\\\/]/', $databasePath) === 1;
+    if (!$isAbsolutePath) {
+        $databasePath = dirname(__DIR__) . DIRECTORY_SEPARATOR . ltrim($databasePath, './\\');
+    }
+
+    return $path = $databasePath;
+}
+
+function uploadsDirectory(): string
+{
+    static $directory = null;
+    if ($directory !== null) {
+        return $directory;
+    }
+
+    $directory = dirname(databasePath()) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'agendamentos';
+    if (!is_dir($directory) && !mkdir($directory, 0700, true) && !is_dir($directory)) {
+        throw new RuntimeException('Não foi possível criar a pasta de uploads');
+    }
+
+    return $directory;
+}
+
 function database(): PDO
 {
     static $database = null;
@@ -15,14 +48,7 @@ function database(): PDO
         throw new RuntimeException('A extensão pdo_sqlite precisa estar ativa no PHP da Hostinger');
     }
 
-    $defaultPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'imoveis-data' . DIRECTORY_SEPARATOR . 'casa-em-pauta.sqlite';
-    $databasePath = (string) (getenv('IMOVEIS_DATABASE_PATH') ?: $defaultPath);
-    $isAbsolutePath = str_starts_with($databasePath, DIRECTORY_SEPARATOR)
-        || preg_match('/^[A-Za-z]:[\\\\\/]/', $databasePath) === 1;
-    if (!$isAbsolutePath) {
-        $databasePath = dirname(__DIR__) . DIRECTORY_SEPARATOR . ltrim($databasePath, './\\');
-    }
-
+    $databasePath = databasePath();
     $directory = dirname($databasePath);
     if (!is_dir($directory) && !mkdir($directory, 0700, true) && !is_dir($directory)) {
         throw new RuntimeException('Não foi possível criar a pasta persistente do banco de dados');

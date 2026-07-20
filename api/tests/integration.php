@@ -44,6 +44,12 @@ try {
         'As migrations precisam ser idempotentes',
     );
 
+    foreach (['agendamentos', 'agendamento_notes', 'agendamento_photos'] as $table) {
+        $exists = $database->prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?");
+        $exists->execute([$table]);
+        expect($exists->fetchColumn() !== false, "A tabela {$table} deve existir");
+    }
+
     $database->prepare('INSERT INTO preferred_neighborhoods (name, normalized_name) VALUES (?, ?)')->execute(['Centro', 'centro']);
     $insert = $database->prepare(<<<'SQL'
         INSERT INTO properties

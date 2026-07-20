@@ -11,6 +11,12 @@ export const router = createRouter({
       meta: { title: 'Avaliação de imóveis' },
     },
     {
+      path: '/agendados',
+      name: 'agendamentos',
+      component: () => import('@/views/AgendadosView.vue'),
+      meta: { title: 'Agendamentos' },
+    },
+    {
       path: '/casa',
       name: 'furniture',
       component: () => import('@/views/FurnitureView.vue'),

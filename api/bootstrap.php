@@ -65,6 +65,18 @@ function sendNoContent(): never
     exit;
 }
 
+function sendFile(string $path, string $mimeType): never
+{
+    if (!is_file($path)) {
+        throw new ApiException('Arquivo não encontrado', 404);
+    }
+
+    header('Content-Type: ' . $mimeType);
+    header('Content-Length: ' . (string) filesize($path));
+    readfile($path);
+    exit;
+}
+
 /** @return array<string, mixed> */
 function jsonBody(): array
 {

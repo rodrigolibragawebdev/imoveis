@@ -54,9 +54,7 @@
 
 		<div class="p-4 flex flex-column flex-1">
 			<div
-				v-if="
-					property.isPreferredNeighborhood || property.hasDuplicates
-				"
+				v-if="property.isPreferredNeighborhood || property.hasDuplicates"
 				class="flex flex-wrap gap-2 mb-3"
 			>
 				<Tag
@@ -196,13 +194,23 @@
 					placeholder="Ex.: rua barulhenta, ótima varanda..."
 					@blur="saveNote"
 				/>
-				<a
-					:href="property.url"
-					target="_blank"
-					rel="noopener noreferrer"
-					class="inline-flex align-items-center gap-2 mt-3 text-sm font-bold text-forest no-underline"
-					>Abrir anúncio <i class="pi pi-arrow-up-right text-xs"
-				/></a>
+				<div class="flex align-items-center justify-content-between gap-2 mt-3">
+					<a
+						:href="property.url"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="inline-flex align-items-center gap-2 text-sm font-bold text-forest no-underline"
+						>Abrir anúncio <i class="pi pi-arrow-up-right text-xs"
+					/></a>
+					<Button
+						label="Agendar visita"
+						icon="pi pi-calendar-plus"
+						size="small"
+						severity="secondary"
+						outlined
+						@click="emit('schedule', property.id)"
+					/>
+				</div>
 			</div>
 		</div>
 	</article>
@@ -226,6 +234,7 @@ const emit = defineEmits<{
 		},
 	]
 	delete: [id: number]
+	schedule: [id: number]
 }>()
 const note = shallowRef(props.property.note)
 const preferenceDraft = shallowRef(props.property.preferenceScore ?? 5)

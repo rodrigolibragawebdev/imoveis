@@ -39,6 +39,7 @@
 <script setup lang="ts">
 const navigation = [
   { to: '/', label: 'Imóveis', icon: 'pi pi-building' },
+  { to: '/agendados', label: 'Agendados', icon: 'pi pi-calendar-clock' },
   { to: '/casa', label: 'Lista da casa', icon: 'pi pi-list-check' },
   { to: '/dicas', label: 'Dicas', icon: 'pi pi-compass' },
 ]

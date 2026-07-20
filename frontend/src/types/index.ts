@@ -107,3 +107,37 @@ export interface FinancingSimulationInput {
   totalPaid: number
   totalInterest: number
 }
+
+export interface AgendamentoNote {
+  id: number
+  content: string
+  createdAt: string
+}
+
+export interface AgendamentoPhoto {
+  id: number
+  url: string
+  createdAt: string
+}
+
+export interface AgendamentoProperty {
+  id: number
+  title: string
+  imageUrl: string | null
+  price: number | null
+  source: string
+  location: string | null
+  url: string
+}
+
+export interface Agendamento {
+  id: number
+  propertyId: number
+  property: AgendamentoProperty
+  advanced: boolean | null
+  active: boolean
+  notes: AgendamentoNote[]
+  photos: AgendamentoPhoto[]
+  createdAt: string
+  updatedAt: string
+}

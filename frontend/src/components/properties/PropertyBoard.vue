@@ -31,9 +31,15 @@
       </div>
     </div>
 
-    <div v-else-if="store.visibleItems.length" class="grid mt-4 md:mt-5">
-      <div v-for="(property, index) in store.visibleItems" :key="property.id" class="col-12 md:col-6 xl:col-4">
-        <PropertyCard :property="property" :position="store.rankingFilter === 'terrible' ? undefined : index + 1" @review="saveReview" @delete="remove" />
+    <div v-else-if="unscheduledItems.length" class="grid mt-4 md:mt-5">
+      <div v-for="(property, index) in unscheduledItems" :key="property.id" class="col-12 md:col-6 xl:col-4">
+        <PropertyCard
+          :property="property"
+          :position="store.rankingFilter === 'terrible' ? undefined : index + 1"
+          @review="saveReview"
+          @delete="remove"
+          @schedule="schedule"
+        />
       </div>
     </div>
 
@@ -54,7 +60,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, shallowRef } from 'vue'
+import { computed, onMounted, shallowRef } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import Message from 'primevue/message'
 import Skeleton from 'primevue/skeleton'
@@ -63,13 +70,23 @@ import PropertyCard from './PropertyCard.vue'
 import PropertyLinkForm from './PropertyLinkForm.vue'
 import PropertyRankingToolbar from './PropertyRankingToolbar.vue'
 import { usePropertiesStore } from '@/stores/properties'
+import { useAgendamentosStore } from '@/stores/agendamentos'
 import type { PropertyRating } from '@/types'
 
 const store = usePropertiesStore()
+const agendamentosStore = useAgendamentosStore()
 const toast = useToast()
+const router = useRouter()
 const neighborhoodDialog = shallowRef(false)
 
-onMounted(store.load)
+const unscheduledItems = computed(() =>
+  store.visibleItems.filter((property) => !agendamentosStore.activeProperties.has(property.id)),
+)
+
+onMounted(() => {
+  store.load()
+  agendamentosStore.load()
+})
 
 async function addLinks(links: string[]) {
   try {
@@ -112,6 +129,16 @@ async function remove(id: number) {
     toast.add({ severity: 'secondary', summary: 'Imóvel removido', life: 2200 })
   } catch {
     toast.add({ severity: 'error', summary: 'Não foi possível remover', detail: store.error, life: 4000 })
+  }
+}
+
+async function schedule(propertyId: number) {
+  try {
+    await agendamentosStore.schedule(propertyId)
+    toast.add({ severity: 'success', summary: 'Visita agendada', life: 2200 })
+    router.push('/agendados')
+  } catch {
+    toast.add({ severity: 'error', summary: 'Não foi possível agendar', detail: agendamentosStore.error, life: 4000 })
   }
 }
 </script>
