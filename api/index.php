@@ -8,6 +8,7 @@ require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/serializers.php';
 require_once __DIR__ . '/preview.php';
 require_once __DIR__ . '/propertyData.php';
+require_once __DIR__ . '/agendamentos.php';
 
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
@@ -153,12 +154,200 @@ try {
     }
 
     if ($method === 'DELETE' && preg_match('#^/properties/(?<id>\d+)$#', $path, $match) === 1) {
+        $propertyId = positiveInteger($match['id'], 'id');
+        deletePropertyAgendamentoPhotoFiles($database, $propertyId);
         $delete = $database->prepare('DELETE FROM properties WHERE id = ?');
-        $delete->execute([positiveInteger($match['id'], 'id')]);
+        $delete->execute([$propertyId]);
         if ($delete->rowCount() === 0) {
             throw new ApiException('Imóvel não encontrado', 404);
         }
         sendNoContent();
+    }
+
+    if ($method === 'GET' && $path === '/agendamentos') {
+        sendJson(listAgendamentos($database));
+    }
+
+    if ($method === 'POST' && $path === '/agendamentos') {
+        $body = jsonBody();
+        $propertyId = positiveInteger($body['propertyId'] ?? null, 'propertyId');
+
+        $findProperty = $database->prepare('SELECT 1 FROM properties WHERE id = ?');
+        $findProperty->execute([$propertyId]);
+        if ($findProperty->fetchColumn() === false) {
+            throw new ApiException('Imóvel não encontrado', 404);
+        }
+
+        $findActive = $database->prepare('SELECT id FROM agendamentos WHERE property_id = ? AND active = 1');
+        $findActive->execute([$propertyId]);
+        $activeId = $findActive->fetchColumn();
+        if ($activeId !== false) {
+            sendJson(findAgendamento($database, (int) $activeId));
+        }
+
+        $insert = $database->prepare('INSERT INTO agendamentos (property_id) VALUES (?)');
+        $insert->execute([$propertyId]);
+        $agendamento = findAgendamento($database, (int) $database->lastInsertId());
+        if ($agendamento === null) {
+            throw new RuntimeException('Não foi possível criar o agendamento');
+        }
+        sendJson($agendamento, 201);
+    }
+
+    if ($method === 'POST' && preg_match('#^/agendamentos/(?<id>\d+)/return$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        $update = $database->prepare(
+            'UPDATE agendamentos SET active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        );
+        $update->execute([$id]);
+        $agendamento = findAgendamento($database, $id);
+        if ($agendamento === null) {
+            throw new ApiException('Agendamento não encontrado', 404);
+        }
+        sendJson($agendamento);
+    }
+
+    if ($method === 'PATCH' && preg_match('#^/agendamentos/(?<id>\d+)$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        $body = jsonBody();
+        $advanced = array_key_exists('advanced', $body) ? $body['advanced'] : null;
+        if (!in_array($advanced, [null, true, false], true)) {
+            throw new ApiException('O campo advanced precisa ser verdadeiro, falso ou nulo');
+        }
+
+        $update = $database->prepare(
+            'UPDATE agendamentos SET advanced = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        );
+        $update->execute([$advanced === null ? null : (int) $advanced, $id]);
+        $agendamento = findAgendamento($database, $id);
+        if ($agendamento === null) {
+            throw new ApiException('Agendamento não encontrado', 404);
+        }
+        sendJson($agendamento);
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/agendamentos/(?<id>\d+)$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        deleteAgendamentoPhotoFiles($database, $id);
+        $delete = $database->prepare('DELETE FROM agendamentos WHERE id = ?');
+        $delete->execute([$id]);
+        if ($delete->rowCount() === 0) {
+            throw new ApiException('Agendamento não encontrado', 404);
+        }
+        sendNoContent();
+    }
+
+    if ($method === 'POST' && preg_match('#^/agendamentos/(?<id>\d+)/notes$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        $findAgendamento = $database->prepare('SELECT 1 FROM agendamentos WHERE id = ?');
+        $findAgendamento->execute([$id]);
+        if ($findAgendamento->fetchColumn() === false) {
+            throw new ApiException('Agendamento não encontrado', 404);
+        }
+
+        $body = jsonBody();
+        $content = cleanText($body['content'] ?? null, 'content', 1, 500);
+        $insert = $database->prepare('INSERT INTO agendamento_notes (agendamento_id, content) VALUES (?, ?)');
+        $insert->execute([$id, $content]);
+
+        sendJson(findAgendamento($database, $id), 201);
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/agendamentos/(?<id>\d+)/notes/(?<noteId>\d+)$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        $noteId = positiveInteger($match['noteId'], 'noteId');
+        $delete = $database->prepare('DELETE FROM agendamento_notes WHERE id = ? AND agendamento_id = ?');
+        $delete->execute([$noteId, $id]);
+        if ($delete->rowCount() === 0) {
+            throw new ApiException('Nota não encontrada', 404);
+        }
+        sendNoContent();
+    }
+
+    if ($method === 'POST' && preg_match('#^/agendamentos/(?<id>\d+)/photos$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        $findAgendamento = $database->prepare('SELECT 1 FROM agendamentos WHERE id = ?');
+        $findAgendamento->execute([$id]);
+        if ($findAgendamento->fetchColumn() === false) {
+            throw new ApiException('Agendamento não encontrado', 404);
+        }
+
+        $file = $_FILES['photo'] ?? null;
+        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            throw new ApiException('Envie uma foto válida no campo "photo"');
+        }
+        if ((int) $file['size'] > 6_000_000) {
+            throw new ApiException('A foto deve ter até 6 MB', 413);
+        }
+
+        $tmpPath = (string) $file['tmp_name'];
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = (string) $finfo->file($tmpPath);
+        $extension = match ($mimeType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            default => null,
+        };
+        if ($extension === null) {
+            throw new ApiException('A foto precisa ser JPEG, PNG ou WEBP');
+        }
+
+        $agendamentoDirectory = uploadsDirectory() . DIRECTORY_SEPARATOR . $id;
+        if (!is_dir($agendamentoDirectory) && !mkdir($agendamentoDirectory, 0700, true) && !is_dir($agendamentoDirectory)) {
+            throw new RuntimeException('Não foi possível criar a pasta de fotos do agendamento');
+        }
+
+        $filename = bin2hex(random_bytes(16)) . '.' . $extension;
+        $relativePath = $id . DIRECTORY_SEPARATOR . $filename;
+        if (!move_uploaded_file($tmpPath, $agendamentoDirectory . DIRECTORY_SEPARATOR . $filename)) {
+            throw new RuntimeException('Não foi possível salvar a foto');
+        }
+
+        $insert = $database->prepare(
+            'INSERT INTO agendamento_photos (agendamento_id, file_path, mime_type) VALUES (?, ?, ?)',
+        );
+        $insert->execute([$id, $relativePath, $mimeType]);
+
+        sendJson(findAgendamento($database, $id), 201);
+    }
+
+    if (
+        $method === 'DELETE'
+        && preg_match('#^/agendamentos/(?<id>\d+)/photos/(?<photoId>\d+)$#', $path, $match) === 1
+    ) {
+        $id = positiveInteger($match['id'], 'id');
+        $photoId = positiveInteger($match['photoId'], 'photoId');
+
+        $find = $database->prepare('SELECT file_path FROM agendamento_photos WHERE id = ? AND agendamento_id = ?');
+        $find->execute([$photoId, $id]);
+        $filePath = $find->fetchColumn();
+        if ($filePath === false) {
+            throw new ApiException('Foto não encontrada', 404);
+        }
+        unlinkAgendamentoPhoto((string) $filePath);
+
+        $database->prepare('DELETE FROM agendamento_photos WHERE id = ?')->execute([$photoId]);
+        sendNoContent();
+    }
+
+    if (
+        $method === 'GET'
+        && preg_match('#^/agendamentos/(?<id>\d+)/photos/(?<photoId>\d+)/file$#', $path, $match) === 1
+    ) {
+        $id = positiveInteger($match['id'], 'id');
+        $photoId = positiveInteger($match['photoId'], 'photoId');
+
+        $find = $database->prepare(
+            'SELECT file_path, mime_type FROM agendamento_photos WHERE id = ? AND agendamento_id = ?',
+        );
+        $find->execute([$photoId, $id]);
+        $photo = $find->fetch();
+        if (!is_array($photo)) {
+            throw new ApiException('Foto não encontrada', 404);
+        }
+
+        sendFile(uploadsDirectory() . DIRECTORY_SEPARATOR . $photo['file_path'], (string) $photo['mime_type']);
     }
 
     if ($method === 'GET' && $path === '/neighborhoods') {
