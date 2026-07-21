@@ -6,6 +6,8 @@ Em 21/07/2026, a comparação de imóveis ganhou cadastro de imobiliárias, matc
 
 Na mesma data, a identificação de imobiliárias foi estendida aos imóveis agendados. Ranking e agendados compartilham `PropertyAgencyBadge` e `useRealEstateAgencies`; qualquer escolha altera o imóvel original e permanece consistente nas duas telas. O contrato aninhado de agendamentos passou a expor `agencyId`, `agencyName` e `agencyMatchMode`.
 
+O seletor compartilhado passou a persistir a imobiliária imediatamente ao clicar em um nome e fechar o popover. A lista de agendados deriva sua apresentação na store e mantém visitas com **Não avançou** no final, sem alterar a persistência ou as datas.
+
 ## Preferências registradas
 
 - Manter o teste de integração PHP e os gates de typecheck/build; testes de componente frontend ainda não estão configurados.

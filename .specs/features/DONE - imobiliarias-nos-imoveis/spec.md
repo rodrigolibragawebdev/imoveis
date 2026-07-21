@@ -29,4 +29,5 @@
 - Clicar no selo abre a edição e oferece **Voltar à identificação automática**.
 - **Reavaliar imóveis** informa quantos foram avaliados, reconhecidos e alterados.
 - Um imóvel agendado exibe o mesmo selo editável do ranking; mudanças manuais ou automáticas persistem no imóvel original e aparecem nas duas telas.
+- Selecionar um nome no popover salva imediatamente e fecha o seletor; não existe etapa adicional de confirmação.
 - Typecheck, build, lint PHP e integração passam.

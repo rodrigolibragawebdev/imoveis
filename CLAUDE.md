@@ -53,6 +53,7 @@ Em PowerShell, use `npm.cmd`, não `npm`, para evitar o bloqueio comum de `npm.p
 - Não confunda metadados técnicos com CTAs: rótulos precisam indicar a ação que acontecerá.
 - Para listas CRUD, separe container, formulário/diálogo e item de lista.
 - Em imóveis, preserve a diferença entre imobiliária automática e manual. O selo sempre abre edição; agregadores sem match mostram “Adicionar imobiliária”.
+- No seletor da imobiliária, a escolha é persistida imediatamente e fecha o popover; não exija uma segunda ação de salvar.
 - Ranking e agendados devem reutilizar `PropertyAgencyBadge` e `useRealEstateAgencies`; não mantenha cópias independentes do seletor ou dos efeitos de CRUD.
 
 ## Regras de imobiliárias
@@ -62,6 +63,7 @@ Em PowerShell, use `npm.cmd`, não `npm`, para evitar o bloqueio comum de `npm.p
 - Ao excluir uma imobiliária, devolva imóveis associados ao modo automático e aplique as regras restantes.
 - Mantenha migration, serializer, tipos TypeScript, store e componentes alinhados sempre que esse contrato mudar.
 - O objeto `Agendamento.property` reflete a imobiliária de `properties`; mudanças feitas em agendados devem usar `PATCH /properties/:id/agency`, nunca criar persistência paralela.
+- Em agendados, derive a lista por `orderedItems`: `advanced === false` aparece no final sem gravar ordem ou mudar timestamps.
 
 ## Encerramento
 

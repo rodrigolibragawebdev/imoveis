@@ -19,8 +19,8 @@
       </div>
     </div>
 
-    <div v-else-if="store.items.length" class="grid mt-4 md:mt-5">
-      <div v-for="agendamento in store.items" :key="agendamento.id" class="col-12 md:col-6 xl:col-4">
+    <div v-else-if="store.orderedItems.length" class="grid mt-4 md:mt-5">
+      <div v-for="agendamento in store.orderedItems" :key="agendamento.id" class="col-12 md:col-6 xl:col-4">
         <AgendamentoCard
           :agendamento="agendamento"
           :agencies="propertiesStore.realEstateAgencies"

@@ -25,3 +25,5 @@ A reavaliação não atualiza `properties.updated_at`, pois esse campo participa
 - `properties.ts`: fonte única da lista de imobiliárias e das operações remotas.
 
 O selo preserva a linguagem editorial do card: superfície creme translúcida, texto floresta e ícone de edição discreto.
+
+O `Select` emite a atribuição manual no próprio `update:modelValue` e fecha o popover. Isso também evita depender de um botão interno quando o painel de opções do PrimeVue é renderizado fora do popover.

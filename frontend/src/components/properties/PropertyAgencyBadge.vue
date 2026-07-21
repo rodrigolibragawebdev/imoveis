@@ -26,10 +26,10 @@
           filter
           placeholder="Selecionar imobiliária"
           class="w-full"
+          @update:model-value="selectAgency"
         />
-        <div class="flex justify-content-end gap-2 mt-3">
+        <div class="flex justify-content-end mt-3">
           <Button label="Gerenciar lista" severity="secondary" text size="small" @click="manageAgencies" />
-          <Button label="Salvar" icon="pi pi-check" size="small" @click="saveAgency" />
         </div>
         <Button
           label="Voltar à identificação automática"
@@ -70,8 +70,9 @@ function toggleEditor(event: Event) {
   agencyPopover.value?.toggle(event)
 }
 
-function saveAgency() {
-  emit('change', { id: props.property.id, agencyId: agencyDraft.value, mode: 'manual' })
+function selectAgency(agencyId: number | null) {
+  agencyDraft.value = agencyId
+  emit('change', { id: props.property.id, agencyId, mode: 'manual' })
   agencyPopover.value?.hide()
 }
 

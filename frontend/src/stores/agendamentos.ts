@@ -17,6 +17,12 @@ export const useAgendamentosStore = defineStore('agendamentos', () => {
     return ids
   })
 
+  const orderedItems = computed(() => [...items.value].sort((left, right) => {
+    const leftIsRejected = left.advanced === false ? 1 : 0
+    const rightIsRejected = right.advanced === false ? 1 : 0
+    return leftIsRejected - rightIsRejected
+  }))
+
   function replace(agendamento: Agendamento) {
     const index = items.value.findIndex((item) => item.id === agendamento.id)
     if (index === -1) items.value.unshift(agendamento)
@@ -157,6 +163,7 @@ export const useAgendamentosStore = defineStore('agendamentos', () => {
     saving,
     error,
     activeProperties,
+    orderedItems,
     load,
     schedule,
     setAdvanced,
