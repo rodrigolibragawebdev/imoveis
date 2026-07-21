@@ -1,4 +1,4 @@
-import{r as e}from"./api-IU1s6f9w.js";import{Ct as t,Et as n,U as r,c as i,mt as a,u as o}from"./_plugin-vue_export-helper-uxP-M7hB.js";var s=o.extend({name:`skeleton`,style:`
+import{r as e}from"./api-BJy3zYoj.js";import{Ct as t,Et as n,U as r,c as i,mt as a,u as o}from"./_plugin-vue_export-helper-uxP-M7hB.js";var s=o.extend({name:`skeleton`,style:`
     .p-skeleton {
         display: block;
         overflow: hidden;

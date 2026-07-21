@@ -192,6 +192,19 @@ function cleanText(mixed $value, string $field, int $minimum, int $maximum): str
     return $text;
 }
 
+function nonEmptyText(mixed $value, string $field): string
+{
+    if (!is_string($value)) {
+        throw new ApiException("O campo {$field} precisa ser um texto");
+    }
+
+    $text = trim($value);
+    if ($text === '') {
+        throw new ApiException("O campo {$field} não pode ficar vazio");
+    }
+    return $text;
+}
+
 function optionalPrice(mixed $value): ?float
 {
     if ($value === null || $value === '') {
