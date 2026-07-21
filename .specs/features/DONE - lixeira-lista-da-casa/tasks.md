@@ -15,3 +15,6 @@
 - [x] **T5 — Validação e documentação**
   - Atualizar integração, specs, README, AGENTS e arquitetura.
   - Gate: PHP lint, integração, smoke HTTP, typecheck, build e diff check.
+- [x] **T6 — Exclusão permanente controlada**
+  - Adicionar exclusão individual e esvaziamento da lixeira, com confirmação irreversível e cascade das variações.
+  - Gate: somente inativos podem ser apagados; PHP lint, integração, typecheck, build, smoke HTTP e diff check.

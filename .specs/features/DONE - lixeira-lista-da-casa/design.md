@@ -11,13 +11,15 @@ Endpoints:
 - `DELETE /furniture/items/bulk`: soft delete em blocos de 500 dentro de transação.
 - `PATCH /furniture/items/:id/restore`: restauração individual.
 - `PATCH /furniture/items/bulk/restore`: restauração em blocos de 500 dentro de transação.
+- `DELETE /furniture/items/trash/:id`: exclusão física individual, restrita a item inativo e idempotente quando o registro já não existe.
+- `DELETE /furniture/items/trash/bulk`: exclusão física dos IDs inativos recebidos, em blocos de 500 dentro de transação.
 
 ## Frontend
 
-- `furniture.ts`: mantém `trashItems` separado dos itens ativos e concentra carregamento/restauração.
-- `FurnitureTrashDialog`: componente apresentacional com lista, vazio, restauração individual e total.
-- `FurnitureCatalog`: abre/carrega a lixeira, coordena ações e feedback.
+- `furniture.ts`: mantém `trashItems` separado dos itens ativos e concentra carregamento, restauração e exclusão permanente.
+- `FurnitureTrashDialog`: componente apresentacional com lista, vazio e eventos de restauração/exclusão individual e total.
+- `FurnitureCatalog`: abre/carrega a lixeira, coordena confirmações irreversíveis, ações e feedback.
 
 ## Segurança
 
-IDs passam por validação positiva e placeholders preparados. Operações em lote são transacionais. A feature não oferece hard delete.
+IDs passam por validação positiva e placeholders preparados. Operações em lote são transacionais. O hard delete exige `deleted_at IS NOT NULL`, possui confirmação com foco inicial em cancelar e conta com cascade das variações.

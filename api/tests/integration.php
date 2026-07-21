@@ -168,10 +168,17 @@ try {
         (int) $database->query('SELECT COUNT(*) FROM furniture_items WHERE deleted_at IS NULL AND id = ' . (int) $purchasedRow['id'])->fetchColumn() === 1,
         'Restaurar deve devolver o item à lista ativa',
     );
-    $database->prepare('DELETE FROM furniture_items WHERE id = ?')->execute([(int) $purchasedRow['id']]);
+    $permanentDelete = $database->prepare(
+        'DELETE FROM furniture_items WHERE id = ? AND deleted_at IS NOT NULL',
+    );
+    $permanentDelete->execute([(int) $purchasedRow['id']]);
+    expect($permanentDelete->rowCount() === 0, 'A exclusão permanente não deve aceitar um item ativo');
+    $database->prepare('UPDATE furniture_items SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?')->execute([(int) $purchasedRow['id']]);
+    $permanentDelete->execute([(int) $purchasedRow['id']]);
+    expect($permanentDelete->rowCount() === 1, 'A exclusão permanente deve remover um item da lixeira');
     expect(
         (int) $database->query('SELECT COUNT(*) FROM furniture_item_variations')->fetchColumn() === 0,
-        'Excluir o item principal deve excluir suas variações em cascata',
+        'Excluir definitivamente o item deve excluir suas variações em cascata',
     );
 
     runMigrations($database);
@@ -235,6 +242,7 @@ try {
     $insert = null;
     $sameUrlInsert = null;
     $variationInsert = null;
+    $permanentDelete = null;
     $upgradeVariationInsert = null;
     $upgradeDatabase = null;
     $exists = null;

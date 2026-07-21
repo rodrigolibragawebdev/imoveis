@@ -104,6 +104,8 @@
       :saving="store.saving"
       @restore="restoreItem"
       @restore-all="restoreAllItems"
+      @permanent-delete="requestPermanentDelete"
+      @permanent-delete-all="requestEmptyTrash"
     />
   </section>
 </template>
@@ -376,6 +378,57 @@ async function restoreAllItems(ids: number[]) {
     toast.add({ severity: 'success', summary: 'Lixeira restaurada', detail: `${ids.length} ${ids.length === 1 ? 'item voltou' : 'itens voltaram'} para a lista ativa.`, life: 3000 })
   } catch {
     showError('Não foi possível restaurar a lixeira')
+  }
+}
+
+function requestPermanentDelete(id: number) {
+  const item = store.trashItems.find((candidate) => candidate.id === id)
+  if (!item) return
+  confirm.require({
+    header: 'Excluir definitivamente?',
+    message: `“${item.title}” e suas variações serão apagados do banco. Esta ação não pode ser desfeita.`,
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Cancelar',
+    acceptLabel: 'Excluir definitivamente',
+    rejectProps: { severity: 'secondary', outlined: true },
+    acceptProps: { severity: 'danger', icon: 'pi pi-trash' },
+    defaultFocus: 'reject',
+    blockScroll: true,
+    accept: () => permanentlyDeleteItem(id),
+  })
+}
+
+function requestEmptyTrash(ids: number[]) {
+  if (!ids.length) return
+  confirm.require({
+    header: `Esvaziar a lixeira com ${ids.length} ${ids.length === 1 ? 'item' : 'itens'}?`,
+    message: 'Todos os itens e suas variações serão apagados do banco. Esta ação não pode ser desfeita.',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Cancelar',
+    acceptLabel: 'Esvaziar lixeira',
+    rejectProps: { severity: 'secondary', outlined: true },
+    acceptProps: { severity: 'danger', icon: 'pi pi-trash' },
+    defaultFocus: 'reject',
+    blockScroll: true,
+    accept: () => permanentlyDeleteItems(ids),
+  })
+}
+
+async function permanentlyDeleteItem(id: number) {
+  try {
+    await store.permanentlyDeleteItem(id)
+    toast.add({ severity: 'secondary', summary: 'Item excluído definitivamente', detail: 'O item e suas variações foram apagados do banco.', life: 3000 })
+  } catch {
+    showError('Não foi possível excluir definitivamente')
+  }
+}
+
+async function permanentlyDeleteItems(ids: number[]) {
+  try {
+    await store.permanentlyDeleteItems(ids)
+    toast.add({ severity: 'secondary', summary: 'Lixeira esvaziada', detail: `${ids.length} ${ids.length === 1 ? 'item foi apagado' : 'itens foram apagados'} definitivamente.`, life: 3000 })
+  } catch {
+    showError('Não foi possível esvaziar a lixeira')
   }
 }
 

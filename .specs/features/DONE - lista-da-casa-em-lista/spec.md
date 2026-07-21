@@ -20,7 +20,7 @@ Transformar o catálogo visual de móveis em uma lista operacional para acompanh
 - **CASA-11**: importar sem limite fixo de quantidade, respeitando 100 KB no arquivo, enviando lotes sequenciais de até 10 itens e gravando cada lote de forma atômica.
 - **CASA-14**: mostrar quantos lotes serão enviados, a requisição atual e quantos lotes já foram concluídos.
 - **CASA-15**: salvar o checkpoint de cada arquivo no `localStorage` e retomar do primeiro lote pendente após falha ou recarregamento.
-- **CASA-16**: registrar erros internos com código de correlação em `storage/logs`, sem persistir o conteúdo importado.
+- **CASA-16**: registrar toda resposta de erro com código de correlação em `storage/logs`, sem persistir o conteúdo importado, cookies ou headers.
 - **CASA-12**: manter criação, edição, filtro por categoria e ordenação já existentes.
 - **CASA-13**: usar “Ver produto” para itens iniciais em vez de expor a origem técnica “Lista inicial”.
 

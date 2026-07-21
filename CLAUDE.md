@@ -41,8 +41,8 @@ Em PowerShell, use `npm.cmd`, não `npm`, para evitar o bloqueio comum de `npm.p
 - Use prepared statements e transações para operações em lote.
 - Mantenha migrations compatíveis com bancos existentes e idempotentes pelo runner.
 - Para importações retomáveis, avance checkpoints somente depois da resposta bem-sucedida do lote; o hash do conteúdo identifica a lista sem salvar o arquivo inteiro.
-- Erros internos usam código de correlação e `storage/logs`; nunca registre corpo da requisição, headers, cookies ou tokens.
-- Itens da lista da casa usam soft delete: rotas de exclusão preenchem `deleted_at`, consultas ativas filtram nulos e restaurações são transacionais.
+- Toda resposta de erro usa código de correlação e `storage/logs`; nunca registre corpo da requisição, headers, cookies ou tokens.
+- Itens da lista ativa usam soft delete: rotas comuns preenchem `deleted_at`, consultas ativas filtram nulos e restaurações são transacionais. Hard delete só é permitido pelas rotas da lixeira, para registros inativos e após confirmação irreversível na interface.
 
 ## Regras da interface
 

@@ -10,7 +10,7 @@
 - [x] Edição dos móveis e preview especializado do Zoom
 - [x] Lista da casa com status comprado, importação JSON e exclusão em lote
 - [x] Variações opcionais agrupadas em cada item da lista da casa
-- [x] Lixeira com soft delete e restauração individual/em lote
+- [x] Lixeira com soft delete, restauração e exclusão permanente controlada individual/em lote
 
 ## Próximas possibilidades
 

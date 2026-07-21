@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Registra uma falha interna sem persistir corpo de requisição, cookies ou headers.
+ * Registra uma resposta de erro sem persistir corpo de requisição, cookies ou headers.
  * Retorna um identificador seguro para correlacionar a resposta com o arquivo de log.
  *
  * @param array<string, mixed> $context

@@ -11,15 +11,24 @@
         <span class="trash-eyebrow">Nada se perde por engano</span>
         <p>Itens removidos ficam inativos no banco e podem voltar para a lista a qualquer momento.</p>
       </div>
-      <Button
-        v-if="items.length"
-        label="Restaurar todos"
-        icon="pi pi-history"
-        severity="secondary"
-        outlined
-        :loading="saving"
-        @click="emit('restoreAll', items.map((item) => item.id))"
-      />
+      <div v-if="items.length" class="trash-bulk-actions">
+        <Button
+          label="Restaurar todos"
+          icon="pi pi-history"
+          severity="secondary"
+          outlined
+          :disabled="saving"
+          @click="emit('restoreAll', itemIds)"
+        />
+        <Button
+          label="Esvaziar lixeira"
+          icon="pi pi-trash"
+          severity="danger"
+          text
+          :disabled="saving"
+          @click="emit('permanentDeleteAll', itemIds)"
+        />
+      </div>
     </div>
 
     <div v-if="loading" class="trash-list" aria-label="Carregando itens inativos">
@@ -54,14 +63,25 @@
           </div>
         </div>
 
-        <Button
-          label="Restaurar"
-          icon="pi pi-undo"
-          severity="success"
-          outlined
-          :loading="saving"
-          @click="emit('restore', item.id)"
-        />
+        <div class="item-actions">
+          <Button
+            label="Restaurar"
+            icon="pi pi-undo"
+            severity="success"
+            outlined
+            :disabled="saving"
+            @click="emit('restore', item.id)"
+          />
+          <Button
+            title="Esta ação é permanente"
+            aria-label="Excluir definitivamente"
+            icon="pi pi-trash"
+            severity="danger"
+            text
+            :disabled="saving"
+            @click="emit('permanentDelete', item.id)"
+          />
+        </div>
       </article>
     </div>
 
@@ -72,21 +92,25 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Skeleton from 'primevue/skeleton'
 import type { FurnitureItem } from '@/types'
 
-defineProps<{
+const emit = defineEmits<{
+  restore: [id: number]
+  restoreAll: [ids: number[]]
+  permanentDelete: [id: number]
+  permanentDeleteAll: [ids: number[]]
+}>()
+const visible = defineModel<boolean>({ required: true })
+const props = defineProps<{
   items: FurnitureItem[]
   loading: boolean
   saving: boolean
 }>()
-const emit = defineEmits<{
-  restore: [id: number]
-  restoreAll: [ids: number[]]
-}>()
-const visible = defineModel<boolean>({ required: true })
+const itemIds = computed(() => props.items.map((item) => item.id))
 
 function formatPrice(price: number | null) {
   if (price === null) return 'Sem preço estimado'
@@ -103,6 +127,7 @@ function formatDeletedAt(value: string) {
 .trash-intro { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-bottom: 1rem; padding: 1rem 1.1rem; border: 1px solid rgba(54, 82, 68, .12); border-radius: 1rem; background: linear-gradient(135deg, rgba(54, 82, 68, .075), rgba(255, 250, 240, .35)); }
 .trash-intro p { max-width: 35rem; margin: .25rem 0 0; color: rgba(38, 48, 41, .64); font-size: .82rem; line-height: 1.5; }
 .trash-eyebrow { color: var(--forest); font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.trash-bulk-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .35rem; }
 .trash-list { display: flex; flex-direction: column; gap: .65rem; max-height: min(58vh, 34rem); overflow: auto; padding-right: .2rem; }
 .trash-item { display: grid; grid-template-columns: 4.75rem minmax(0, 1fr) auto; align-items: center; gap: 1rem; padding: .8rem; border: 1px solid rgba(38, 48, 41, .12); border-radius: 1rem; background: rgba(255, 250, 240, .72); }
 .item-visual { display: grid; place-items: center; width: 4.75rem; height: 4.75rem; overflow: hidden; border-radius: .8rem; color: rgba(54, 82, 68, .4); background: rgba(54, 82, 68, .09); }
@@ -114,6 +139,7 @@ function formatDeletedAt(value: string) {
 .item-title { margin: .25rem 0 .4rem; font-size: 1.05rem; line-height: 1.18; overflow-wrap: anywhere; }
 .item-meta { display: flex; flex-wrap: wrap; gap: .35rem .8rem; color: rgba(38, 48, 41, .54); font-size: .7rem; }
 .item-meta span:first-child { color: var(--terracotta); font-weight: 800; }
+.item-actions { display: flex; align-items: center; gap: .25rem; }
 .trash-empty { display: flex; min-height: 18rem; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .empty-mark { display: grid; place-items: center; width: 3.75rem; height: 3.75rem; border-radius: 50%; color: var(--forest); background: rgba(54, 82, 68, .09); }
 .trash-empty h3 { margin: 1rem 0 .3rem; font-size: 1.6rem; }
@@ -121,8 +147,10 @@ function formatDeletedAt(value: string) {
 
 @media (max-width: 640px) {
   .trash-intro { align-items: stretch; flex-direction: column; }
+  .trash-bulk-actions { align-items: stretch; flex-direction: column; }
   .trash-item { grid-template-columns: 3.75rem minmax(0, 1fr); }
   .item-visual { width: 3.75rem; height: 3.75rem; }
-  .trash-item :deep(.p-button) { grid-column: 1 / -1; width: 100%; }
+  .item-actions { grid-column: 1 / -1; }
+  .item-actions :deep(.p-button:first-child) { flex: 1; }
 }
 </style>

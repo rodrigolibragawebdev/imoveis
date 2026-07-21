@@ -14,5 +14,5 @@
 - Na importação, somente nomes normalizados iguais são duplicatas; URL repetida com nomes diferentes é aceita. Títulos não possuem limite específico de caracteres.
 - JSON de importação usa nome de categoria na interface por legibilidade e `categoryId` no contrato canônico da API.
 - Variações são registros filhos do item principal, com URL única e exclusão em cascata; somente o link é obrigatório para criar uma opção.
-- Falhas 500 possuem código de correlação e log JSON Lines diário em `storage/logs`, sem corpo, headers ou cookies da requisição.
-- Itens principais usam soft delete com `deleted_at`; ficam fora da lista ativa, permanecem com suas variações e podem ser restaurados individualmente ou em lote. A interface não oferece hard delete.
+- Toda resposta de erro possui código de correlação e log JSON Lines diário em `storage/logs`, sem corpo, headers ou cookies da requisição.
+- Itens principais usam soft delete com `deleted_at`; ficam fora da lista ativa e podem ser restaurados. A exclusão física só existe na lixeira, somente para inativos, individualmente ou em lote, com confirmação irreversível e cascade das variações.

@@ -294,6 +294,36 @@ export const useFurnitureStore = defineStore('furniture', () => {
     }
   }
 
+  async function permanentlyDeleteItem(id: number) {
+    saving.value = true
+    error.value = ''
+    try {
+      await api.delete(`/furniture/items/trash/${id}`)
+      trashItems.value = trashItems.value.filter((item) => item.id !== id)
+    } catch (requestError) {
+      error.value = getApiError(requestError)
+      throw requestError
+    } finally {
+      saving.value = false
+    }
+  }
+
+  async function permanentlyDeleteItems(ids: number[]) {
+    if (!ids.length) return
+    saving.value = true
+    error.value = ''
+    try {
+      await api.delete('/furniture/items/trash/bulk', { data: { ids } })
+      const deletedIds = new Set(ids)
+      trashItems.value = trashItems.value.filter((item) => !deletedIds.has(item.id))
+    } catch (requestError) {
+      error.value = getApiError(requestError)
+      throw requestError
+    } finally {
+      saving.value = false
+    }
+  }
+
   async function addVariation(itemId: number, input: FurnitureVariationInput) {
     saving.value = true
     error.value = ''
@@ -357,6 +387,8 @@ export const useFurnitureStore = defineStore('furniture', () => {
     removeItems,
     restoreItem,
     restoreItems,
+    permanentlyDeleteItem,
+    permanentlyDeleteItems,
     setPurchased,
     addVariation,
     updateVariation,

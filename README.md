@@ -44,12 +44,12 @@ O banco local fica em `data/casa-em-pauta.sqlite`. As migrations e os dados inic
 - A lista da casa exibe foto, descrição, preço, metadados e ações em linhas responsivas.
 - Itens podem ser marcados como comprados, editados ou movidos para a lixeira; o status permanece após recarregar.
 - A seleção permite mover todos os itens desejados para a lixeira após confirmação, sem limite fixo de quantidade.
-- A **Lixeira** mantém itens inativos no banco, preserva suas variações e permite restaurar um item ou todos de uma vez.
+- A **Lixeira** mantém itens inativos no banco, preserva suas variações e permite restaurar, excluir definitivamente um item ou esvaziar tudo após confirmação irreversível.
 - O botão **Importar JSON** aceita texto colado ou arquivo `.json` de até 100 KB, sem limite fixo de itens na API. A interface envia lotes sequenciais de até 10 itens e mostra cada requisição.
 - Ao concluir um lote, o navegador grava um checkpoint no `localStorage`, identificado pelo conteúdo normalizado do arquivo. Se uma requisição falhar, repetir a importação continua do primeiro lote pendente.
 - Duplicatas da importação são definidas somente pelo nome normalizado (sem diferença de maiúsculas, acentos ou espaços repetidos). URLs iguais com nomes diferentes são aceitas.
 - Títulos não possuem limite próprio de caracteres; continuam sujeitos ao limite total de 100 KB do JSON.
-- Falhas internas recebem um código e são registradas em `storage/logs/api-AAAA-MM-DD.log`; os arquivos `.log` não são versionados nem acessíveis pela web.
+- Toda resposta de erro recebe um código e é registrada em `storage/logs/api-AAAA-MM-DD.log`; os arquivos `.log` não são versionados nem acessíveis pela web, e não guardam corpo, cookies ou headers.
 - Cada item possui o botão **+ Variações** logo abaixo da linha principal. Basta informar outro link; nome, imagem e preço são capturados quando disponíveis e podem ser corrigidos manualmente.
 
 Exemplo de importação:
