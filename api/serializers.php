@@ -13,6 +13,9 @@ function mapProperty(array $row): array
         'imageUrl' => $row['image_url'] !== null ? (string) $row['image_url'] : null,
         'price' => $row['price'] !== null ? (float) $row['price'] : null,
         'source' => (string) $row['source'],
+        'agencyId' => isset($row['agency_id']) && $row['agency_id'] !== null ? (int) $row['agency_id'] : null,
+        'agencyName' => isset($row['agency_name']) && $row['agency_name'] !== null ? (string) $row['agency_name'] : null,
+        'agencyMatchMode' => (string) ($row['agency_match_mode'] ?? 'automatic'),
         'location' => $row['location'] !== null ? (string) $row['location'] : null,
         'rating' => $row['rating'] !== null ? (string) $row['rating'] : null,
         'preferenceScore' => $row['preference_score'] !== null ? (int) $row['preference_score'] : null,
@@ -44,6 +47,19 @@ function mapFurnitureVariation(array $row): array
         'imageUrl' => $row['image_url'] !== null ? (string) $row['image_url'] : null,
         'price' => $row['price'] !== null ? (float) $row['price'] : null,
         'source' => (string) $row['source'],
+        'createdAt' => (string) $row['created_at'],
+        'updatedAt' => (string) $row['updated_at'],
+    ];
+}
+
+/** @param array<string, mixed> $row */
+function mapRealEstateAgency(array $row): array
+{
+    return [
+        'id' => (int) $row['id'],
+        'name' => (string) $row['name'],
+        'keyword' => (string) $row['keyword'],
+        'normalizedKeyword' => (string) $row['normalized_keyword'],
         'createdAt' => (string) $row['created_at'],
         'updatedAt' => (string) $row['updated_at'],
     ];

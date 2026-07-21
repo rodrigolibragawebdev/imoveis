@@ -9,6 +9,7 @@ require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/serializers.php';
 require_once __DIR__ . '/preview.php';
 require_once __DIR__ . '/propertyData.php';
+require_once __DIR__ . '/agencies.php';
 require_once __DIR__ . '/agendamentos.php';
 
 header('X-Content-Type-Options: nosniff');
@@ -75,8 +76,11 @@ try {
             $normalizedLinks[normalizeLinkForComparison($canonical)] = $canonical;
         }
         $find = $database->prepare('SELECT * FROM properties WHERE normalized_url = ? OR url = ? LIMIT 1');
+        $agencies = listRealEstateAgencies($database);
         $insert = $database->prepare(
-            'INSERT INTO properties (url, normalized_url, title, image_url, price, source, location) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO properties '
+            . '(url, normalized_url, title, image_url, price, source, location, agency_id, agency_match_mode) '
+            . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'automatic')",
         );
         $propertyIds = [];
 
@@ -89,6 +93,7 @@ try {
             }
 
             $preview = linkPreview($link);
+            $agency = matchRealEstateAgency($preview['url'], $agencies);
             try {
                 $insert->execute([
                     $preview['url'],
@@ -98,6 +103,7 @@ try {
                     $preview['price'],
                     $preview['source'],
                     $preview['location'],
+                    $agency !== null ? (int) $agency['id'] : null,
                 ]);
                 $propertyIds[] = (int) $database->lastInsertId();
             } catch (PDOException $error) {
@@ -410,6 +416,98 @@ try {
         sendNoContent();
     }
 
+    if ($method === 'GET' && $path === '/real-estate-agencies') {
+        sendJson(listRealEstateAgencies($database));
+    }
+
+    if ($method === 'POST' && $path === '/real-estate-agencies') {
+        $body = jsonBody();
+        $name = cleanText($body['name'] ?? null, 'name', 2, 80);
+        $keyword = cleanText($body['keyword'] ?? null, 'keyword', 2, 60);
+        $normalizedKeyword = normalizeAgencyKeyword($keyword);
+        if (strlen($normalizedKeyword) < 2) {
+            throw new ApiException('Informe uma palavra-chave com pelo menos dois caracteres ou números');
+        }
+        try {
+            $insert = $database->prepare(<<<'SQL'
+                INSERT INTO real_estate_agencies (name, keyword, normalized_keyword)
+                VALUES (?, ?, ?)
+                SQL);
+            $insert->execute([$name, $keyword, $normalizedKeyword]);
+        } catch (PDOException $error) {
+            if (str_contains(strtolower($error->getMessage()), 'unique')) {
+                throw new ApiException('Já existe uma imobiliária com esse nome ou palavra-chave', 409, $error);
+            }
+            throw $error;
+        }
+        $find = $database->prepare('SELECT * FROM real_estate_agencies WHERE id = ?');
+        $find->execute([(int) $database->lastInsertId()]);
+        $agency = $find->fetch();
+        if (!is_array($agency)) {
+            throw new RuntimeException('Não foi possível cadastrar a imobiliária');
+        }
+        sendJson(mapRealEstateAgency($agency), 201);
+    }
+
+    if ($method === 'PATCH' && preg_match('#^/real-estate-agencies/(?<id>\d+)$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        $body = jsonBody();
+        $name = cleanText($body['name'] ?? null, 'name', 2, 80);
+        $keyword = cleanText($body['keyword'] ?? null, 'keyword', 2, 60);
+        $normalizedKeyword = normalizeAgencyKeyword($keyword);
+        if (strlen($normalizedKeyword) < 2) {
+            throw new ApiException('Informe uma palavra-chave com pelo menos dois caracteres ou números');
+        }
+        try {
+            $update = $database->prepare(<<<'SQL'
+                UPDATE real_estate_agencies
+                SET name = ?, keyword = ?, normalized_keyword = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                SQL);
+            $update->execute([$name, $keyword, $normalizedKeyword, $id]);
+        } catch (PDOException $error) {
+            if (str_contains(strtolower($error->getMessage()), 'unique')) {
+                throw new ApiException('Já existe uma imobiliária com esse nome ou palavra-chave', 409, $error);
+            }
+            throw $error;
+        }
+        $find = $database->prepare('SELECT * FROM real_estate_agencies WHERE id = ?');
+        $find->execute([$id]);
+        $agency = $find->fetch();
+        if (!is_array($agency)) {
+            throw new ApiException('Imobiliária não encontrada', 404);
+        }
+        sendJson(mapRealEstateAgency($agency));
+    }
+
+    if ($method === 'POST' && $path === '/real-estate-agencies/reevaluate') {
+        sendJson(reevaluateAutomaticPropertyAgencies($database));
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/real-estate-agencies/(?<id>\d+)$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        $database->beginTransaction();
+        try {
+            $reset = $database->prepare(
+                "UPDATE properties SET agency_match_mode = 'automatic' WHERE agency_id = ?",
+            );
+            $reset->execute([$id]);
+            $delete = $database->prepare('DELETE FROM real_estate_agencies WHERE id = ?');
+            $delete->execute([$id]);
+            if ($delete->rowCount() === 0) {
+                throw new ApiException('Imobiliária não encontrada', 404);
+            }
+            $database->commit();
+        } catch (Throwable $error) {
+            if ($database->inTransaction()) {
+                $database->rollBack();
+            }
+            throw $error;
+        }
+        reevaluateAutomaticPropertyAgencies($database);
+        sendNoContent();
+    }
+
     if ($method === 'GET' && $path === '/furniture/categories') {
         $rows = $database->query(<<<'SQL'
             SELECT c.*
@@ -467,6 +565,45 @@ try {
             static fn (array $row): array => mapFurniture($row, $variationsByItem[(int) $row['id']] ?? []),
             $itemRows,
         ));
+    }
+
+    if ($method === 'PATCH' && preg_match('#^/properties/(?<id>\d+)/agency$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        $body = jsonBody();
+        $mode = $body['mode'] ?? null;
+        if (!in_array($mode, ['automatic', 'manual'], true)) {
+            throw new ApiException('O modo de identificação da imobiliária é inválido');
+        }
+
+        $findProperty = $database->prepare('SELECT url FROM properties WHERE id = ?');
+        $findProperty->execute([$id]);
+        $propertyUrl = $findProperty->fetchColumn();
+        if ($propertyUrl === false) {
+            throw new ApiException('Imóvel não encontrado', 404);
+        }
+
+        $agencyId = null;
+        if ($mode === 'automatic') {
+            $agency = matchRealEstateAgency((string) $propertyUrl, listRealEstateAgencies($database));
+            $agencyId = $agency !== null ? (int) $agency['id'] : null;
+        } elseif (($body['agencyId'] ?? null) !== null) {
+            $agencyId = positiveInteger($body['agencyId'], 'agencyId');
+            $findAgency = $database->prepare('SELECT 1 FROM real_estate_agencies WHERE id = ?');
+            $findAgency->execute([$agencyId]);
+            if ($findAgency->fetchColumn() === false) {
+                throw new ApiException('Imobiliária não encontrada', 404);
+            }
+        }
+
+        $update = $database->prepare(
+            'UPDATE properties SET agency_id = ?, agency_match_mode = ? WHERE id = ?',
+        );
+        $update->execute([$agencyId, $mode, $id]);
+        $property = findRankedProperty($database, $id);
+        if ($property === null) {
+            throw new ApiException('Imóvel não encontrado', 404);
+        }
+        sendJson($property);
     }
 
     if ($method === 'GET' && $path === '/furniture/items') {
