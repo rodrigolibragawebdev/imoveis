@@ -167,6 +167,9 @@ export interface AgendamentoProperty {
   imageUrl: string | null
   price: number | null
   source: string
+  agencyId: number | null
+  agencyName: string | null
+  agencyMatchMode: PropertyAgencyMatchMode
   location: string | null
   url: string
 }

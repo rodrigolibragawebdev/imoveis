@@ -16,6 +16,7 @@ require_once dirname(__DIR__) . '/serializers.php';
 require_once dirname(__DIR__) . '/preview.php';
 require_once dirname(__DIR__) . '/propertyData.php';
 require_once dirname(__DIR__) . '/agencies.php';
+require_once dirname(__DIR__) . '/agendamentos.php';
 
 function expect(bool $condition, string $message): void
 {
@@ -324,6 +325,16 @@ try {
         && $automaticMapped['agencyMatchMode'] === 'automatic',
         'O contrato do imóvel deve expor o nome e a origem da identificação',
     );
+    $scheduleInsert = $database->prepare('INSERT INTO agendamentos (property_id) VALUES (?)');
+    $scheduleInsert->execute([$manualPropertyId]);
+    $scheduledProperty = findAgendamento($database, (int) $database->lastInsertId());
+    expect(
+        is_array($scheduledProperty)
+        && $scheduledProperty['property']['agencyId'] === $auxiliadoraId
+        && $scheduledProperty['property']['agencyName'] === 'Auxiliadora Predial'
+        && $scheduledProperty['property']['agencyMatchMode'] === 'manual',
+        'O imóvel agendado deve expor a mesma identificação editável de imobiliária',
+    );
 
     $zoomUrl = 'https://www.zoom.com.br/tv/smart-tv-qd-mini-led-65-tcl-4k-65c6k?_lc=211';
     expect(
@@ -333,7 +344,7 @@ try {
     $zoomMetadata = propertyUrlMetadata($zoomUrl);
     expect($zoomMetadata['title'] === 'Smart TV QD-Mini LED 65" TCL 4K 65C6K', 'O slug do Zoom deve gerar um título útil');
 
-    echo "OK: CORS, migrations/upgrades, logger, soft delete, ranking, bairros, imobiliárias, duplicatas, catálogo, variações e Zoom\n";
+    echo "OK: CORS, migrations/upgrades, logger, soft delete, ranking, bairros, imobiliárias/agendados, duplicatas, catálogo, variações e Zoom\n";
 } finally {
     putenv('IMOVEIS_LOG_DIRECTORY');
     if ($originalAppOrigin === false) {
@@ -353,6 +364,7 @@ try {
     $automaticAgencyProperty = null;
     $manualAgencyProperty = null;
     $findAgencyAssignments = null;
+    $scheduleInsert = null;
     $permanentDelete = null;
     $upgradeVariationInsert = null;
     $upgradeDatabase = null;

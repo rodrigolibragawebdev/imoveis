@@ -4,4 +4,4 @@
 
 Features CRUD mantêm container, formulário/diálogo e item visual separados. A lista da casa usa `FurnitureCatalog`, `FurnitureItemForm`, `FurnitureVariationForm`, `FurnitureImportDialog`, `FurnitureTrashDialog` e `FurnitureListItem`.
 
-Imobiliárias usam `RealEstateAgencyDialog` para CRUD/reavaliação, `PropertyRankingToolbar` como entrada e `PropertyCard` para sobrescrita manual por imóvel.
+Imobiliárias usam `RealEstateAgencyDialog` para CRUD/reavaliação, `PropertyRankingToolbar` como entrada, `PropertyAgencyBadge` como seletor compartilhado e `useRealEstateAgencies` como orquestração comum entre comparação e agendados.

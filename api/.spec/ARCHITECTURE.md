@@ -12,4 +12,6 @@ Títulos são armazenados como `TEXT` e não possuem limite específico de carac
 
 `agencies.php` reconhece imobiliárias por palavra-chave normalizada no hostname. A migration 012 adiciona a tabela de regras e a atribuição manual/automática aos imóveis. A reavaliação opera somente sobre o modo automático e não altera `properties.updated_at`, preservando o desempate do ranking.
 
+Agendamentos não duplicam a atribuição: suas consultas fazem join com `properties` e `real_estate_agencies`, expondo a imobiliária atual dentro do objeto `property`.
+
 Variações usam `furniture_item_variations`, introduzida pela migration 009, e são serializadas dentro de `FurnitureItem.variations`. O item principal possui CRUD de variações em rotas aninhadas e a FK usa `ON DELETE CASCADE`.

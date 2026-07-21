@@ -11,6 +11,7 @@ A migration 012 cria `real_estate_agencies` e adiciona `agency_id` e `agency_mat
 - `POST /real-estate-agencies/reevaluate`: reprocessa somente imóveis automáticos.
 - `PATCH /properties/:id/agency`: salva escolha manual ou restaura o modo automático.
 - `GET /properties` expõe `agencyId`, `agencyName` e `agencyMatchMode`.
+- `GET /agendamentos` e suas respostas de mutação expõem os mesmos campos dentro de `property`.
 
 A reavaliação não atualiza `properties.updated_at`, pois esse campo participa do desempate do ranking.
 
@@ -18,7 +19,9 @@ A reavaliação não atualiza `properties.updated_at`, pois esse campo participa
 
 - `RealEstateAgencyDialog`: cadastro, edição, remoção e reavaliação.
 - `PropertyRankingToolbar`: entrada da gestão e contador.
-- `PropertyCard`: selo editável e popover de atribuição manual/automática.
+- `PropertyAgencyBadge`: selo e popover reutilizáveis de atribuição manual/automática.
+- `PropertyCard` e `AgendamentoCard`: compõem o mesmo `PropertyAgencyBadge`.
+- `useRealEstateAgencies`: centraliza CRUD, confirmações, feedback e reavaliação entre ranking e agendados.
 - `properties.ts`: fonte única da lista de imobiliárias e das operações remotas.
 
 O selo preserva a linguagem editorial do card: superfície creme translúcida, texto floresta e ícone de edição discreto.

@@ -11,6 +11,7 @@
 - **IMO-07**: permitir retornar um imóvel ao modo automático.
 - **IMO-08**: reavaliar todos os imóveis automáticos já salvos sem sobrescrever escolhas manuais e sem alterar sua posição no ranking.
 - **IMO-09**: identificar automaticamente novos imóveis durante a importação de links.
+- **IMO-10**: exibir e permitir editar a mesma imobiliária nos cards de imóveis agendados.
 
 ## Regras
 
@@ -27,4 +28,5 @@
 - Um anúncio do ZAP sem correspondência exibe **Adicionar imobiliária** e aceita escolha manual.
 - Clicar no selo abre a edição e oferece **Voltar à identificação automática**.
 - **Reavaliar imóveis** informa quantos foram avaliados, reconhecidos e alterados.
+- Um imóvel agendado exibe o mesmo selo editável do ranking; mudanças manuais ou automáticas persistem no imóvel original e aparecem nas duas telas.
 - Typecheck, build, lint PHP e integração passam.

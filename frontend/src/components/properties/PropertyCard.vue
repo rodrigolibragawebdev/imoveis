@@ -39,14 +39,11 @@
 					:aria-label="`Posição ${position} no ranking`"
 					>#{{ position }}</span
 				>
-				<Button
-					:label="property.agencyName ?? 'Adicionar imobiliária'"
-					:icon="property.agencyName ? 'pi pi-pencil' : 'pi pi-plus'"
-					severity="secondary"
-					size="small"
-					class="agency-label"
-					:aria-label="agencyButtonLabel"
-					@click="toggleAgencyEditor"
+				<PropertyAgencyBadge
+					:property="property"
+					:agencies="agencies"
+					@change="emit('agency', $event)"
+					@manage-agencies="emit('manage-agencies')"
 				/>
 			</div>
 			<Button
@@ -59,39 +56,6 @@
 				@click="requestDelete"
 			/>
 		</div>
-
-		<Popover ref="agencyPopover">
-			<div class="agency-editor">
-				<span class="block text-xs uppercase font-bold text-terracotta tracking-wide mb-1">Imobiliária</span>
-				<strong class="block text-ink mb-1">{{ property.agencyName ?? 'Ainda não identificada' }}</strong>
-				<small class="block opacity-60 line-height-3 mb-3">
-					{{ property.agencyMatchMode === 'manual' ? 'Escolha manual preservada nas reavaliações.' : 'Identificação automática pela URL.' }}
-				</small>
-				<Select
-					v-model="agencyDraft"
-					:options="agencies"
-					option-label="name"
-					option-value="id"
-					show-clear
-					filter
-					placeholder="Selecionar imobiliária"
-					class="w-full"
-				/>
-				<div class="flex justify-content-end gap-2 mt-3">
-					<Button label="Gerenciar lista" severity="secondary" text size="small" @click="manageAgencies" />
-					<Button label="Salvar" icon="pi pi-check" size="small" @click="saveAgency" />
-				</div>
-				<Button
-					label="Voltar à identificação automática"
-					icon="pi pi-refresh"
-					severity="secondary"
-					text
-					size="small"
-					class="w-full mt-1"
-					@click="useAutomaticAgency"
-				/>
-			</div>
-		</Popover>
 
 		<div class="p-4 flex flex-column flex-1">
 			<div
@@ -260,11 +224,10 @@
 <script setup lang="ts">
 import { computed, shallowRef, watch } from "vue"
 import Button from "primevue/button"
-import Popover from "primevue/popover"
-import Select from "primevue/select"
 import Tag from "primevue/tag"
 import Textarea from "primevue/textarea"
 import type { Property, PropertyAgencyMatchMode, PropertyRating, RealEstateAgency } from "@/types"
+import PropertyAgencyBadge from './PropertyAgencyBadge.vue'
 
 const props = defineProps<{ property: Property; position?: number; agencies: RealEstateAgency[] }>()
 const emit = defineEmits<{
@@ -284,8 +247,6 @@ const emit = defineEmits<{
 const note = shallowRef(props.property.note)
 const preferenceDraft = shallowRef(props.property.preferenceScore ?? 5)
 const imageFailed = shallowRef(false)
-const agencyDraft = shallowRef<number | null>(props.property.agencyId)
-const agencyPopover = shallowRef<InstanceType<typeof Popover> | null>(null)
 const ratingOptions = [
 	{
 		value: "liked" as const,
@@ -320,17 +281,6 @@ const duplicateSummary = computed(
 		props.property.duplicateMatches[0]?.reason ??
 		"Este anúncio se parece com outro imóvel da lista.",
 )
-const agencyButtonLabel = computed(() => props.property.agencyName
-	? `Editar imobiliária ${props.property.agencyName}`
-	: 'Adicionar imobiliária manualmente')
-
-watch(
-	() => props.property.agencyId,
-	(value) => {
-		agencyDraft.value = value
-	},
-)
-
 watch(
 	() => props.property.note,
 	(value) => {
@@ -390,25 +340,6 @@ function saveNote() {
 
 function requestDelete() {
 	emit("delete", props.property.id)
-}
-function toggleAgencyEditor(event: Event) {
-	agencyDraft.value = props.property.agencyId
-	agencyPopover.value?.toggle(event)
-}
-
-function saveAgency() {
-	emit('agency', { id: props.property.id, agencyId: agencyDraft.value, mode: 'manual' })
-	agencyPopover.value?.hide()
-}
-
-function useAutomaticAgency() {
-	emit('agency', { id: props.property.id, agencyId: null, mode: 'automatic' })
-	agencyPopover.value?.hide()
-}
-
-function manageAgencies() {
-	agencyPopover.value?.hide()
-	emit('manage-agencies')
 }
 </script>
 
@@ -486,17 +417,6 @@ function manageAgencies() {
 	z-index: 2;
 	max-width: calc(100% - 4.5rem);
 }
-.agency-label {
-	max-width: min(16rem, calc(100vw - 10rem));
-	border: 1px solid rgba(255, 255, 255, .62) !important;
-	border-radius: .55rem !important;
-	color: var(--forest) !important;
-	background: rgba(255, 252, 244, .92) !important;
-	box-shadow: 0 5px 16px rgba(24, 34, 28, .12);
-	backdrop-filter: blur(8px);
-}
-.agency-label :deep(.p-button-label) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.agency-editor { width: min(22rem, calc(100vw - 3rem)); }
 .rank-position {
 	display: inline-flex;
 	align-items: center;

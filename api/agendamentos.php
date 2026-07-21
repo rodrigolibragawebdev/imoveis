@@ -6,9 +6,11 @@ declare(strict_types=1);
 function listAgendamentos(PDO $database): array
 {
     $rows = $database->query(<<<'SQL'
-        SELECT a.*, p.title, p.image_url, p.price, p.source, p.location, p.url AS property_url
+        SELECT a.*, p.title, p.image_url, p.price, p.source, p.location, p.url AS property_url,
+               p.agency_id, p.agency_match_mode, rea.name AS agency_name
         FROM agendamentos a
         JOIN properties p ON p.id = a.property_id
+        LEFT JOIN real_estate_agencies rea ON rea.id = p.agency_id
         ORDER BY a.created_at DESC, a.id DESC
         SQL)->fetchAll();
 
@@ -21,9 +23,11 @@ function listAgendamentos(PDO $database): array
 function findAgendamento(PDO $database, int $id): ?array
 {
     $query = $database->prepare(<<<'SQL'
-        SELECT a.*, p.title, p.image_url, p.price, p.source, p.location, p.url AS property_url
+        SELECT a.*, p.title, p.image_url, p.price, p.source, p.location, p.url AS property_url,
+               p.agency_id, p.agency_match_mode, rea.name AS agency_name
         FROM agendamentos a
         JOIN properties p ON p.id = a.property_id
+        LEFT JOIN real_estate_agencies rea ON rea.id = p.agency_id
         WHERE a.id = ?
         SQL);
     $query->execute([$id]);

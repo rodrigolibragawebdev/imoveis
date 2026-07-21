@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import { api, getApiError } from '@/services/api'
-import type { Agendamento } from '@/types'
+import type { Agendamento, Property } from '@/types'
 
 export const useAgendamentosStore = defineStore('agendamentos', () => {
   const items = ref<Agendamento[]>([])
@@ -137,6 +137,20 @@ export const useAgendamentosStore = defineStore('agendamentos', () => {
     }
   }
 
+  function syncPropertyAgency(property: Pick<Property, 'id' | 'agencyId' | 'agencyName' | 'agencyMatchMode'>) {
+    items.value = items.value.map((agendamento) => agendamento.propertyId === property.id
+      ? {
+          ...agendamento,
+          property: {
+            ...agendamento.property,
+            agencyId: property.agencyId,
+            agencyName: property.agencyName,
+            agencyMatchMode: property.agencyMatchMode,
+          },
+        }
+      : agendamento)
+  }
+
   return {
     items,
     loading,
@@ -152,5 +166,6 @@ export const useAgendamentosStore = defineStore('agendamentos', () => {
     removeNote,
     addPhoto,
     removePhoto,
+    syncPropertyAgency,
   }
 })

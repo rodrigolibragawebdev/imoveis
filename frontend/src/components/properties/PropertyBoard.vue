@@ -86,17 +86,24 @@ import PropertyCard from './PropertyCard.vue'
 import PropertyLinkForm from './PropertyLinkForm.vue'
 import PropertyRankingToolbar from './PropertyRankingToolbar.vue'
 import RealEstateAgencyDialog from './RealEstateAgencyDialog.vue'
-import { usePropertiesStore } from '@/stores/properties'
 import { useAgendamentosStore } from '@/stores/agendamentos'
-import type { PropertyAgencyMatchMode, PropertyRating } from '@/types'
+import { useRealEstateAgencies } from '@/composables/useRealEstateAgencies'
+import type { PropertyRating } from '@/types'
 
-const store = usePropertiesStore()
+const {
+  store,
+  agencyDialog,
+  addAgency,
+  updateAgency,
+  confirmRemoveAgency,
+  reevaluateAgencies,
+  assignAgency,
+} = useRealEstateAgencies()
 const agendamentosStore = useAgendamentosStore()
 const toast = useToast()
 const confirm = useConfirm()
 const router = useRouter()
 const neighborhoodDialog = shallowRef(false)
-const agencyDialog = shallowRef(false)
 
 const unscheduledItems = computed(() =>
   store.visibleItems.filter((property) => !agendamentosStore.activeProperties.has(property.id)),
@@ -139,76 +146,6 @@ async function removeNeighborhood(id: number) {
     toast.add({ severity: 'secondary', summary: 'Bairro removido da prioridade', life: 2200 })
   } catch {
     toast.add({ severity: 'error', summary: 'Não foi possível remover', detail: store.error, life: 4000 })
-  }
-}
-
-async function addAgency(input: { name: string; keyword: string }) {
-  try {
-    await store.addRealEstateAgency(input)
-    toast.add({ severity: 'success', summary: 'Imobiliária adicionada', detail: input.name, life: 2600 })
-  } catch {
-    toast.add({ severity: 'error', summary: 'Não foi possível cadastrar', detail: store.error, life: 4000 })
-  }
-}
-
-async function updateAgency(input: { id: number; name: string; keyword: string }) {
-  try {
-    await store.updateRealEstateAgency(input.id, { name: input.name, keyword: input.keyword })
-    toast.add({ severity: 'success', summary: 'Imobiliária atualizada', detail: input.name, life: 2600 })
-  } catch {
-    toast.add({ severity: 'error', summary: 'Não foi possível atualizar', detail: store.error, life: 4000 })
-  }
-}
-
-function confirmRemoveAgency(id: number) {
-  const agency = store.realEstateAgencies.find((item) => item.id === id)
-  confirm.require({
-    header: 'Excluir imobiliária?',
-    message: agency
-      ? `${agency.name} sairá da lista. Os imóveis ligados a ela voltarão para a identificação automática.`
-      : 'A imobiliária sairá da lista e os imóveis serão reavaliados.',
-    icon: 'pi pi-exclamation-triangle',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Excluir',
-    rejectProps: { severity: 'secondary', outlined: true },
-    acceptProps: { severity: 'danger' },
-    accept: () => removeAgency(id),
-  })
-}
-
-async function removeAgency(id: number) {
-  try {
-    await store.removeRealEstateAgency(id)
-    toast.add({ severity: 'secondary', summary: 'Imobiliária removida', life: 2400 })
-  } catch {
-    toast.add({ severity: 'error', summary: 'Não foi possível remover', detail: store.error, life: 4000 })
-  }
-}
-
-async function reevaluateAgencies() {
-  try {
-    const result = await store.reevaluateRealEstateAgencies()
-    toast.add({
-      severity: 'success',
-      summary: 'Imóveis reavaliados',
-      detail: `${result.matched} de ${result.evaluated} reconhecidos · ${result.changed} alterados.`,
-      life: 4200,
-    })
-  } catch {
-    toast.add({ severity: 'error', summary: 'Não foi possível reavaliar', detail: store.error, life: 4000 })
-  }
-}
-
-async function assignAgency(payload: { id: number; agencyId: number | null; mode: PropertyAgencyMatchMode }) {
-  try {
-    await store.assignPropertyAgency(payload.id, payload.agencyId, payload.mode)
-    toast.add({
-      severity: 'success',
-      summary: payload.mode === 'manual' ? 'Imobiliária definida' : 'Identificação automática restaurada',
-      life: 2400,
-    })
-  } catch {
-    toast.add({ severity: 'error', summary: 'Não foi possível alterar', detail: store.error, life: 4000 })
   }
 }
 

@@ -206,6 +206,7 @@ export const usePropertiesStore = defineStore('properties', () => {
     try {
       const { data } = await api.patch<Property>(`/properties/${id}/agency`, { agencyId, mode })
       items.value = items.value.map((property) => (property.id === id ? data : property))
+      return data
     } catch (requestError) {
       error.value = getApiError(requestError)
       throw requestError
@@ -244,6 +245,7 @@ export const usePropertiesStore = defineStore('properties', () => {
     filterCounts,
     visibleItems,
     load,
+    loadRealEstateAgencies,
     addLinks,
     updateReview,
     addNeighborhood,

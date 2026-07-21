@@ -42,6 +42,7 @@ O banco local fica em `data/casa-em-pauta.sqlite`. As migrations e os dados inic
 - Bairros desejados recebem prioridade e também podem ser usados como filtro.
 - O botão **Imobiliárias** cadastra nomes e palavras-chave de domínio. Novos anúncios recebem o nome automaticamente quando houver match; a ação **Reavaliar imóveis** aplica as regras ao acervo existente sem apagar correções manuais.
 - O selo da imobiliária substitui o domínio técnico no card e está sempre editável. Em agregadores como ZAP, use **Adicionar imobiliária** para escolher manualmente; depois ainda é possível voltar ao modo automático.
+- Imóveis em **Agendados** usam o mesmo selo e a mesma escolha: alterar a imobiliária em qualquer uma das telas atualiza o imóvel original.
 - O filtro de duplicatas aponta o mesmo link sem tracking ou candidatos com mesmo bairro, quartos e área praticamente igual. Nada é excluído automaticamente.
 - A lista da casa exibe foto, descrição, preço, metadados e ações em linhas responsivas.
 - A busca textual filtra por item, categoria, origem, link ou variação após debounce de 300 ms, ignorando diferenças de maiúsculas e acentos.

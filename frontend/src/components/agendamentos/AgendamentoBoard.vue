@@ -11,6 +11,7 @@
     </div>
 
     <Message v-if="store.error" severity="error" class="mt-4">{{ store.error }}</Message>
+    <Message v-else-if="propertiesStore.error" severity="error" class="mt-4">{{ propertiesStore.error }}</Message>
 
     <div v-if="store.loading" class="grid mt-4">
       <div v-for="index in 3" :key="index" class="col-12 md:col-6 xl:col-4">
@@ -22,13 +23,16 @@
       <div v-for="agendamento in store.items" :key="agendamento.id" class="col-12 md:col-6 xl:col-4">
         <AgendamentoCard
           :agendamento="agendamento"
+          :agencies="propertiesStore.realEstateAgencies"
           @set-advanced="setAdvanced"
           @return-to-listing="returnToListing"
-          @remove="remove"
+          @remove="confirmRemove"
           @add-note="addNote"
           @remove-note="removeNote"
           @add-photo="addPhoto"
           @remove-photo="removePhoto"
+          @agency="assignAgency"
+          @manage-agencies="agencyDialog = true"
         />
       </div>
     </div>
@@ -38,21 +42,50 @@
       <h2 class="display-font text-3xl m-0 mb-2">Nenhuma visita agendada.</h2>
       <p class="opacity-60 m-0">Vá até um imóvel e clique em "Agendar visita" para começar.</p>
     </div>
+
+    <RealEstateAgencyDialog
+      v-model="agencyDialog"
+      :agencies="propertiesStore.realEstateAgencies"
+      :saving="propertiesStore.saving"
+      @add="addAgency"
+      @update="updateAgency"
+      @delete="confirmRemoveAgency"
+      @reevaluate="reevaluateAgencies"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 import Message from 'primevue/message'
 import Skeleton from 'primevue/skeleton'
 import AgendamentoCard from './AgendamentoCard.vue'
+import RealEstateAgencyDialog from '@/components/properties/RealEstateAgencyDialog.vue'
 import { useAgendamentosStore } from '@/stores/agendamentos'
+import { useRealEstateAgencies } from '@/composables/useRealEstateAgencies'
 
 const store = useAgendamentosStore()
 const toast = useToast()
+const confirm = useConfirm()
+const {
+  store: propertiesStore,
+  agencyDialog,
+  addAgency,
+  updateAgency,
+  confirmRemoveAgency,
+  reevaluateAgencies,
+  assignAgency,
+} = useRealEstateAgencies({
+  onPropertyAssigned: store.syncPropertyAgency,
+  afterAssignmentsChanged: store.load,
+})
 
-onMounted(store.load)
+onMounted(() => {
+  store.load()
+  propertiesStore.load()
+})
 
 async function setAdvanced(payload: { id: number; advanced: boolean | null }) {
   try {
@@ -78,6 +111,19 @@ async function remove(id: number) {
   } catch {
     toast.add({ severity: 'error', summary: 'Não foi possível remover', detail: store.error, life: 4000 })
   }
+}
+
+function confirmRemove(id: number) {
+  confirm.require({
+    header: 'Remover agendamento?',
+    message: 'O agendamento, suas notas e suas fotos serão apagados.',
+    icon: 'pi pi-trash',
+    rejectLabel: 'Cancelar',
+    acceptLabel: 'Remover',
+    rejectProps: { severity: 'secondary', outlined: true },
+    acceptProps: { severity: 'danger' },
+    accept: () => remove(id),
+  })
 }
 
 async function addNote(payload: { id: number; content: string }) {

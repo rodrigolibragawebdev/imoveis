@@ -21,6 +21,14 @@
           <i class="pi pi-building text-5xl opacity-30" />
         </div>
       </a>
+      <div class="absolute top-0 left-0 m-3 agency-anchor">
+        <PropertyAgencyBadge
+          :property="agendamento.property"
+          :agencies="agencies"
+          @change="emit('agency', $event)"
+          @manage-agencies="emit('manageAgencies')"
+        />
+      </div>
       <Button
         icon="pi pi-trash"
         severity="secondary"
@@ -115,12 +123,13 @@ import { shallowRef } from 'vue'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Textarea from 'primevue/textarea'
-import type { Agendamento } from '@/types'
+import PropertyAgencyBadge from '@/components/properties/PropertyAgencyBadge.vue'
+import type { Agendamento, PropertyAgencyMatchMode, RealEstateAgency } from '@/types'
 import { compressImage } from '@/utils/imageCompression'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:5177/api'
 
-const props = defineProps<{ agendamento: Agendamento }>()
+const props = defineProps<{ agendamento: Agendamento; agencies: RealEstateAgency[] }>()
 const emit = defineEmits<{
   setAdvanced: [payload: { id: number; advanced: boolean | null }]
   returnToListing: [id: number]
@@ -129,6 +138,8 @@ const emit = defineEmits<{
   removeNote: [payload: { id: number; noteId: number }]
   addPhoto: [payload: { id: number; file: File }]
   removePhoto: [payload: { id: number; photoId: number }]
+  agency: [payload: { id: number; agencyId: number | null; mode: PropertyAgencyMatchMode }]
+  manageAgencies: []
 }>()
 
 const imageFailed = shallowRef(false)
@@ -158,7 +169,7 @@ function setAdvanced(advanced: boolean | null) {
 }
 
 function requestRemove() {
-  if (window.confirm('Remover este agendamento? Notas e fotos serão apagadas.')) emit('remove', props.agendamento.id)
+  emit('remove', props.agendamento.id)
 }
 
 function submitNote() {
@@ -203,6 +214,7 @@ async function onFilesSelected(event: Event) {
 .media-link { color: inherit; text-decoration: none; }
 .media-fallback { color: var(--forest); background: linear-gradient(135deg, #e3ddcc, #d6dfd4); }
 .media-action { z-index: 3; color: var(--cream) !important; background: rgba(38, 48, 41, 0.55) !important; backdrop-filter: blur(6px); }
+.agency-anchor { z-index: 2; max-width: calc(100% - 4.5rem); }
 .tracking-wide { letter-spacing: 0.08em; }
 .photo-thumb {
   width: 4.5rem;

@@ -4,6 +4,8 @@ Em 21/07/2026, a lista da casa passou de cards em grade para linhas responsivas 
 
 Em 21/07/2026, a comparação de imóveis ganhou cadastro de imobiliárias, match automático por palavra-chave no hostname e atribuição manual editável em cada card. Novos anúncios são identificados na entrada; o botão de reavaliação atualiza o acervo automático, preserva escolhas manuais e não interfere no desempate do ranking. A migration 012 mantém compatibilidade com bancos existentes. Lint PHP, integração, typecheck e build foram aprovados.
 
+Na mesma data, a identificação de imobiliárias foi estendida aos imóveis agendados. Ranking e agendados compartilham `PropertyAgencyBadge` e `useRealEstateAgencies`; qualquer escolha altera o imóvel original e permanece consistente nas duas telas. O contrato aninhado de agendamentos passou a expor `agencyId`, `agencyName` e `agencyMatchMode`.
+
 ## Preferências registradas
 
 - Manter o teste de integração PHP e os gates de typecheck/build; testes de componente frontend ainda não estão configurados.

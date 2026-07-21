@@ -121,6 +121,9 @@ O aviso de `unlink(...): Resource temporarily unavailable` pode ocorrer no Windo
 - Escolhas manuais, inclusive a ausência explícita de imobiliária, nunca são sobrescritas por reavaliação.
 - Alterar imobiliária não atualiza `properties.updated_at`, pois esse timestamp participa do desempate do ranking.
 - O selo da imobiliária substitui o domínio técnico, deve ser operável por teclado e permanecer editável mesmo quando automático.
+- `PropertyAgencyBadge.vue` é o seletor compartilhado por `PropertyCard` e `AgendamentoCard`; não duplique o popover entre telas.
+- `useRealEstateAgencies.ts` centraliza CRUD, confirmações, toasts e reavaliação. Cada container fornece apenas a sincronização local necessária depois da resposta.
+- Agendamentos não armazenam outra imobiliária: `Agendamento.property` lê a atribuição do imóvel original por join e expõe os mesmos três campos do contrato.
 
 ## Segurança
 

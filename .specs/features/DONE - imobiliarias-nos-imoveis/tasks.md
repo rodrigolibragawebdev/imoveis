@@ -14,3 +14,6 @@
   - Gate: cards com e sem match permanecem operáveis em desktop e mobile.
 - [x] **T5 — Validação e documentação**
   - Executar gates e atualizar specs, README, AGENTS.md e CLAUDE.md.
+- [x] **T6 — Imobiliárias em agendados**
+  - Expor os campos no contrato de agendamentos, reutilizar o seletor nos cards e manter as duas telas sincronizadas.
+  - Gate: integração, typecheck, build e confirmação visual sem `window.confirm`.
