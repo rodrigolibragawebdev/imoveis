@@ -772,6 +772,56 @@ try {
         sendJson(['deleted' => $deleted]);
     }
 
+    if ($method === 'DELETE' && $path === '/furniture/items/trash/bulk') {
+        $body = jsonBody();
+        $ids = $body['ids'] ?? null;
+        if (!is_array($ids) || count($ids) < 1) {
+            throw new ApiException('Selecione pelo menos um item da lixeira para excluir definitivamente');
+        }
+        $validatedIds = [];
+        foreach ($ids as $id) {
+            $validatedIds[] = positiveInteger($id, 'ids');
+        }
+        $validatedIds = array_values(array_unique($validatedIds));
+        $deleted = 0;
+        $database->beginTransaction();
+        try {
+            foreach (array_chunk($validatedIds, 500) as $idChunk) {
+                $placeholders = implode(', ', array_fill(0, count($idChunk), '?'));
+                $delete = $database->prepare(
+                    "DELETE FROM furniture_items WHERE deleted_at IS NOT NULL AND id IN ({$placeholders})",
+                );
+                $delete->execute($idChunk);
+                $deleted += $delete->rowCount();
+            }
+            $database->commit();
+        } catch (Throwable $error) {
+            if ($database->inTransaction()) {
+                $database->rollBack();
+            }
+            throw $error;
+        }
+        sendJson(['deleted' => $deleted]);
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/furniture/items/trash/(?<id>\d+)$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        $find = $database->prepare('SELECT deleted_at FROM furniture_items WHERE id = ?');
+        $find->execute([$id]);
+        $item = $find->fetch();
+        if (!is_array($item)) {
+            sendNoContent();
+        }
+        if ($item['deleted_at'] === null) {
+            throw new ApiException('Mova o item para a lixeira antes de excluí-lo definitivamente', 409);
+        }
+        $delete = $database->prepare(
+            'DELETE FROM furniture_items WHERE id = ? AND deleted_at IS NOT NULL',
+        );
+        $delete->execute([$id]);
+        sendNoContent();
+    }
+
     if ($method === 'PATCH' && $path === '/furniture/items/bulk/restore') {
         $body = jsonBody();
         $ids = $body['ids'] ?? null;
@@ -1045,8 +1095,17 @@ try {
 
     throw new ApiException('Rota não encontrada', 404);
 } catch (ApiException $error) {
-    sendJson(['message' => $error->getMessage()], $error->status);
+    $errorId = writeApiErrorLog($error, [
+        ...$requestContext,
+        'status' => $error->status,
+        'handled' => true,
+    ]);
+    sendJson(['message' => $error->getMessage(), 'errorId' => $errorId], $error->status);
 } catch (Throwable $error) {
-    $errorId = writeApiErrorLog($error, $requestContext);
+    $errorId = writeApiErrorLog($error, [
+        ...$requestContext,
+        'status' => 500,
+        'handled' => false,
+    ]);
     sendJson(['message' => 'Erro interno da API', 'errorId' => $errorId], 500);
 }
