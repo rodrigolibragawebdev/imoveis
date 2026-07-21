@@ -23,5 +23,5 @@
   - Registrar respostas de erro com código de correlação em `storage/logs`, sem dados do payload.
   - Gate: retomada idempotente por nome, orçamento de preview, logger correlacionado e smoke HTTP.
 - [x] **T8 — Busca textual**
-  - Adicionar campo responsivo e filtro local normalizado sobre itens e variações.
+  - Adicionar campo responsivo e filtro local normalizado sobre itens e variações, com debounce de 300 ms.
   - Gate: resultado, resumo, seleção, vazio e limpeza usam somente os itens visíveis; typecheck e build aprovados.

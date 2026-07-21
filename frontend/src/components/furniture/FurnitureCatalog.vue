@@ -143,8 +143,9 @@ const variationParent = shallowRef<FurnitureItem | null>(null)
 const editingVariation = shallowRef<FurnitureVariation | null>(null)
 const selectedIds = shallowRef<number[]>([])
 const searchQuery = shallowRef('')
+const debouncedSearchQuery = shallowRef('')
 
-const normalizedSearchQuery = computed(() => foldSearchText(searchQuery.value))
+const normalizedSearchQuery = computed(() => foldSearchText(debouncedSearchQuery.value))
 const hasSearch = computed(() => normalizedSearchQuery.value !== '')
 const visibleItems = computed(() => {
   if (!normalizedSearchQuery.value) return store.items
@@ -161,10 +162,20 @@ const listSummary = computed(() => {
 })
 const emptyStateTitle = computed(() => hasSearch.value ? 'Nenhum resultado' : 'Nenhum item por aqui')
 const emptyStateDescription = computed(() => hasSearch.value
-  ? `Não encontramos item ou variação para “${searchQuery.value.trim()}”.`
+  ? `Não encontramos item ou variação para “${debouncedSearchQuery.value.trim()}”.`
   : 'Troque o filtro, importe um JSON ou adicione o primeiro link desta categoria.')
 
 onMounted(store.initialize)
+watch(searchQuery, (value, _previousValue, onCleanup) => {
+  if (value === '') {
+    debouncedSearchQuery.value = ''
+    return
+  }
+  const timeoutId = globalThis.setTimeout(() => {
+    debouncedSearchQuery.value = value
+  }, 300)
+  onCleanup(() => globalThis.clearTimeout(timeoutId))
+})
 watch(itemDialog, (isOpen) => {
   if (!isOpen) editingItem.value = null
 })

@@ -42,7 +42,7 @@ O banco local fica em `data/casa-em-pauta.sqlite`. As migrations e os dados inic
 - Bairros desejados recebem prioridade e também podem ser usados como filtro.
 - O filtro de duplicatas aponta o mesmo link sem tracking ou candidatos com mesmo bairro, quartos e área praticamente igual. Nada é excluído automaticamente.
 - A lista da casa exibe foto, descrição, preço, metadados e ações em linhas responsivas.
-- A busca textual filtra instantaneamente por item, categoria, origem, link ou variação, ignorando diferenças de maiúsculas e acentos.
+- A busca textual filtra por item, categoria, origem, link ou variação após debounce de 300 ms, ignorando diferenças de maiúsculas e acentos.
 - Itens podem ser marcados como comprados, editados ou movidos para a lixeira; o status permanece após recarregar.
 - A seleção permite mover todos os itens desejados para a lixeira após confirmação, sem limite fixo de quantidade.
 - A **Lixeira** mantém itens inativos no banco, preserva suas variações e permite restaurar, excluir definitivamente um item ou esvaziar tudo após confirmação irreversível.
