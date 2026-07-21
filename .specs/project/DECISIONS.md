@@ -15,4 +15,6 @@
 - JSON de importação usa nome de categoria na interface por legibilidade e `categoryId` no contrato canônico da API.
 - Variações são registros filhos do item principal, com URL única e exclusão em cascata; somente o link é obrigatório para criar uma opção.
 - Toda resposta de erro possui código de correlação e log JSON Lines diário em `storage/logs`, sem corpo, headers ou cookies da requisição.
+- A API usa allowlist CORS exata para `https://toolsfera.com`, `https://www.toolsfera.com` e uma origem adicional configurável por `APP_ORIGIN`; domínios parecidos não são aceitos.
 - Itens principais usam soft delete com `deleted_at`; ficam fora da lista ativa e podem ser restaurados. A exclusão física só existe na lixeira, somente para inativos, individualmente ou em lote, com confirmação irreversível e cascade das variações.
+- Imobiliárias são reconhecidas por palavra-chave normalizada contida somente no hostname. O match mais longo vence; atribuições manuais nunca são sobrescritas pela reavaliação e alterações de imobiliária não atualizam o timestamp usado no desempate do ranking.

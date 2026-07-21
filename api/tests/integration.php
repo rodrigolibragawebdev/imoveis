@@ -5,6 +5,8 @@ declare(strict_types=1);
 $databasePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'imoveis-api-test-' . bin2hex(random_bytes(6)) . '.sqlite';
 $upgradeDatabasePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'imoveis-api-upgrade-test-' . bin2hex(random_bytes(6)) . '.sqlite';
 $logDirectory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'imoveis-api-log-test-' . bin2hex(random_bytes(6));
+$originalAppOrigin = getenv('APP_ORIGIN');
+$originalHttpOrigin = $_SERVER['HTTP_ORIGIN'] ?? null;
 
 require_once dirname(__DIR__) . '/bootstrap.php';
 require_once dirname(__DIR__) . '/logger.php';
@@ -13,6 +15,7 @@ require_once dirname(__DIR__) . '/database.php';
 require_once dirname(__DIR__) . '/serializers.php';
 require_once dirname(__DIR__) . '/preview.php';
 require_once dirname(__DIR__) . '/propertyData.php';
+require_once dirname(__DIR__) . '/agencies.php';
 
 function expect(bool $condition, string $message): void
 {
@@ -22,6 +25,19 @@ function expect(bool $condition, string $message): void
 }
 
 try {
+    putenv('APP_ORIGIN=https://staging.toolsfera.test');
+    foreach (['https://toolsfera.com', 'https://www.toolsfera.com', 'https://staging.toolsfera.test'] as $allowedOrigin) {
+        $_SERVER['HTTP_ORIGIN'] = $allowedOrigin;
+        requireAllowedOrigin();
+    }
+    $_SERVER['HTTP_ORIGIN'] = 'https://toolsfera.com.atacante.test';
+    try {
+        requireAllowedOrigin();
+        throw new RuntimeException('Uma origem externa não deve acessar a API');
+    } catch (ApiException $error) {
+        expect($error->status === 403, 'Origem externa deve receber status 403');
+    }
+
     putenv('IMOVEIS_LOG_DIRECTORY=' . $logDirectory);
     $errorId = writeApiErrorLog(new RuntimeException('Falha controlada do teste'), [
         'method' => 'TEST',
@@ -66,6 +82,8 @@ try {
     $allowRepeatedUrls($upgradeDatabase);
     $softDeleteMigration = require dirname(__DIR__) . '/migrations/011_furniture_soft_delete.php';
     $softDeleteMigration($upgradeDatabase);
+    $agencyMigration = require dirname(__DIR__) . '/migrations/012_real_estate_agencies.php';
+    $agencyMigration($upgradeDatabase);
     expect(
         (int) $upgradeDatabase->query('SELECT COUNT(*) FROM furniture_items')->fetchColumn() === $upgradeItemCount,
         'A migration 010 deve preservar os itens existentes',
@@ -78,6 +96,12 @@ try {
     expect(
         in_array('deleted_at', array_column($upgradeColumns, 'name'), true),
         'O upgrade deve adicionar o soft delete aos itens existentes',
+    );
+    $upgradePropertyColumns = $upgradeDatabase->query('PRAGMA table_info(properties)')->fetchAll();
+    expect(
+        in_array('agency_id', array_column($upgradePropertyColumns, 'name'), true)
+        && in_array('agency_match_mode', array_column($upgradePropertyColumns, 'name'), true),
+        'O upgrade deve adicionar a identificação de imobiliária aos imóveis existentes',
     );
     $upgradeVariationInsert = null;
     $upgradeDatabase = null;
@@ -228,6 +252,79 @@ try {
     expect(count($exactMatches) === 1, 'Links que diferem apenas por tracking devem ser duplicatas exatas');
     expect($ranked[1]['hasDuplicates'] === true, 'Imóveis com mesmo bairro, quartos e área próxima devem ser sinalizados');
 
+    $agencyInsert = $database->prepare(<<<'SQL'
+        INSERT INTO real_estate_agencies (name, keyword, normalized_keyword)
+        VALUES (?, ?, ?)
+        SQL);
+    $agencyInsert->execute(['Cardini', 'cardini', normalizeAgencyKeyword('cardini')]);
+    $cardiniId = (int) $database->lastInsertId();
+    $agencyInsert->execute(['Cardini Prime', 'cardini prime', normalizeAgencyKeyword('cardini prime')]);
+    $cardiniPrimeId = (int) $database->lastInsertId();
+    $agencyInsert->execute(['Auxiliadora Predial', 'auxiliadora', normalizeAgencyKeyword('auxiliadora')]);
+    $auxiliadoraId = (int) $database->lastInsertId();
+    $agencies = listRealEstateAgencies($database);
+    $mostSpecificAgency = matchRealEstateAgency('https://www.cardiniprime.com.br/imovel/1', $agencies);
+    expect(
+        is_array($mostSpecificAgency) && (int) $mostSpecificAgency['id'] === $cardiniPrimeId,
+        'A palavra-chave mais específica deve vencer quando duas imobiliárias combinarem',
+    );
+    expect(
+        matchRealEstateAgency('https://zapimoveis.com.br/imovel/cardini-no-titulo', $agencies) === null,
+        'O match deve considerar somente o domínio, nunca o caminho do anúncio',
+    );
+
+    $automaticAgencyProperty = $database->prepare(<<<'SQL'
+        INSERT INTO properties (url, normalized_url, title, source, agency_match_mode)
+        VALUES (?, ?, ?, ?, 'automatic')
+        SQL);
+    $automaticUrl = 'https://www.auxiliadora.com.br/imovel/automatico';
+    $automaticAgencyProperty->execute([
+        $automaticUrl,
+        normalizeLinkForComparison($automaticUrl),
+        'Imóvel com identificação automática',
+        'auxiliadora.com.br',
+    ]);
+    $automaticPropertyId = (int) $database->lastInsertId();
+    $manualAgencyProperty = $database->prepare(<<<'SQL'
+        INSERT INTO properties (url, normalized_url, title, source, agency_id, agency_match_mode)
+        VALUES (?, ?, ?, ?, ?, 'manual')
+        SQL);
+    $manualUrl = 'https://www.cardini.com.br/imovel/manual';
+    $manualAgencyProperty->execute([
+        $manualUrl,
+        normalizeLinkForComparison($manualUrl),
+        'Imóvel com escolha manual',
+        'cardini.com.br',
+        $auxiliadoraId,
+    ]);
+    $manualPropertyId = (int) $database->lastInsertId();
+
+    $reevaluation = reevaluateAutomaticPropertyAgencies($database);
+    expect($reevaluation['matched'] >= 1, 'A reavaliação deve reconhecer domínios cadastrados');
+    expect($reevaluation['changed'] >= 1, 'A reavaliação deve persistir novos matches automáticos');
+    $findAgencyAssignments = $database->prepare('SELECT agency_id, agency_match_mode FROM properties WHERE id = ?');
+    $findAgencyAssignments->execute([$automaticPropertyId]);
+    $automaticAssignment = $findAgencyAssignments->fetch();
+    expect(
+        is_array($automaticAssignment) && (int) $automaticAssignment['agency_id'] === $auxiliadoraId,
+        'O imóvel automático deve receber a imobiliária correspondente ao domínio',
+    );
+    $findAgencyAssignments->execute([$manualPropertyId]);
+    $manualAssignment = $findAgencyAssignments->fetch();
+    expect(
+        is_array($manualAssignment)
+        && (int) $manualAssignment['agency_id'] === $auxiliadoraId
+        && $manualAssignment['agency_match_mode'] === 'manual',
+        'A reavaliação não deve sobrescrever uma escolha manual',
+    );
+    $automaticMapped = findRankedProperty($database, $automaticPropertyId);
+    expect(
+        is_array($automaticMapped)
+        && $automaticMapped['agencyName'] === 'Auxiliadora Predial'
+        && $automaticMapped['agencyMatchMode'] === 'automatic',
+        'O contrato do imóvel deve expor o nome e a origem da identificação',
+    );
+
     $zoomUrl = 'https://www.zoom.com.br/tv/smart-tv-qd-mini-led-65-tcl-4k-65c6k?_lc=211';
     expect(
         normalizeLinkForComparison($zoomUrl) === 'https://zoom.com.br/tv/smart-tv-qd-mini-led-65-tcl-4k-65c6k',
@@ -236,12 +333,26 @@ try {
     $zoomMetadata = propertyUrlMetadata($zoomUrl);
     expect($zoomMetadata['title'] === 'Smart TV QD-Mini LED 65" TCL 4K 65C6K', 'O slug do Zoom deve gerar um título útil');
 
-    echo "OK: migrations/upgrades, logger, soft delete, ranking, bairros, duplicatas, catálogo, variações e Zoom\n";
+    echo "OK: CORS, migrations/upgrades, logger, soft delete, ranking, bairros, imobiliárias, duplicatas, catálogo, variações e Zoom\n";
 } finally {
     putenv('IMOVEIS_LOG_DIRECTORY');
+    if ($originalAppOrigin === false) {
+        putenv('APP_ORIGIN');
+    } else {
+        putenv('APP_ORIGIN=' . $originalAppOrigin);
+    }
+    if ($originalHttpOrigin === null) {
+        unset($_SERVER['HTTP_ORIGIN']);
+    } else {
+        $_SERVER['HTTP_ORIGIN'] = $originalHttpOrigin;
+    }
     $insert = null;
     $sameUrlInsert = null;
     $variationInsert = null;
+    $agencyInsert = null;
+    $automaticAgencyProperty = null;
+    $manualAgencyProperty = null;
+    $findAgencyAssignments = null;
     $permanentDelete = null;
     $upgradeVariationInsert = null;
     $upgradeDatabase = null;

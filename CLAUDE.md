@@ -40,6 +40,7 @@ Em PowerShell, use `npm.cmd`, não `npm`, para evitar o bloqueio comum de `npm.p
 - Atualize `api/serializers.php` e `frontend/src/types/index.ts` juntos quando o contrato JSON mudar.
 - Use prepared statements e transações para operações em lote.
 - Mantenha migrations compatíveis com bancos existentes e idempotentes pelo runner.
+- CORS aceita exatamente `https://toolsfera.com`, `https://www.toolsfera.com` e a origem configurada em `APP_ORIGIN`; não use wildcard ou sufixo parcial.
 - Para importações retomáveis, avance checkpoints somente depois da resposta bem-sucedida do lote; o hash do conteúdo identifica a lista sem salvar o arquivo inteiro.
 - Toda resposta de erro usa código de correlação e `storage/logs`; nunca registre corpo da requisição, headers, cookies ou tokens.
 - Itens da lista ativa usam soft delete: rotas comuns preenchem `deleted_at`, consultas ativas filtram nulos e restaurações são transacionais. Hard delete só é permitido pelas rotas da lixeira, para registros inativos e após confirmação irreversível na interface.
@@ -51,6 +52,14 @@ Em PowerShell, use `npm.cmd`, não `npm`, para evitar o bloqueio comum de `npm.p
 - Trate desktop e mobile como partes do mesmo requisito.
 - Não confunda metadados técnicos com CTAs: rótulos precisam indicar a ação que acontecerá.
 - Para listas CRUD, separe container, formulário/diálogo e item de lista.
+- Em imóveis, preserve a diferença entre imobiliária automática e manual. O selo sempre abre edição; agregadores sem match mostram “Adicionar imobiliária”.
+
+## Regras de imobiliárias
+
+- O cadastro usa nome exibido e palavra-chave de hostname; não derive imobiliária de título, caminho ou query.
+- Reavaliação em massa nunca altera registros manuais nem o `updated_at` usado pelo ranking.
+- Ao excluir uma imobiliária, devolva imóveis associados ao modo automático e aplique as regras restantes.
+- Mantenha migration, serializer, tipos TypeScript, store e componentes alinhados sempre que esse contrato mudar.
 
 ## Encerramento
 

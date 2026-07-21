@@ -127,6 +127,40 @@ function requestPath(): string
     return '/' . ltrim($uriPath, '/');
 }
 
+function canonicalOrigin(string $value): ?string
+{
+    $origin = rtrim(trim($value), '/');
+    $parts = parse_url($origin);
+    if (
+        !is_array($parts)
+        || !isset($parts['scheme'], $parts['host'])
+        || !in_array(strtolower((string) $parts['scheme']), ['http', 'https'], true)
+        || isset($parts['user'])
+        || isset($parts['pass'])
+        || isset($parts['query'])
+        || isset($parts['fragment'])
+        || (isset($parts['path']) && $parts['path'] !== '')
+    ) {
+        return null;
+    }
+
+    $scheme = strtolower((string) $parts['scheme']);
+    $host = strtolower((string) $parts['host']);
+    $port = isset($parts['port']) ? ':' . (int) $parts['port'] : '';
+    return "{$scheme}://{$host}{$port}";
+}
+
+/** @return list<string> */
+function allowedRequestOrigins(): array
+{
+    $configuredOrigin = canonicalOrigin((string) (getenv('APP_ORIGIN') ?: 'https://www.toolsfera.com'));
+    return array_values(array_unique(array_filter([
+        $configuredOrigin,
+        'https://toolsfera.com',
+        'https://www.toolsfera.com',
+    ], static fn (?string $origin): bool => $origin !== null)));
+}
+
 function requireAllowedOrigin(): void
 {
     $origin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
@@ -134,12 +168,12 @@ function requireAllowedOrigin(): void
         return;
     }
 
-    $allowedOrigin = rtrim((string) (getenv('APP_ORIGIN') ?: 'https://www.toolsfera.com'), '/');
-    if (rtrim($origin, '/') !== $allowedOrigin) {
+    $canonicalOrigin = canonicalOrigin($origin);
+    if ($canonicalOrigin === null || !in_array($canonicalOrigin, allowedRequestOrigins(), true)) {
         throw new ApiException('Origem não permitida', 403);
     }
 
-    header('Access-Control-Allow-Origin: ' . $allowedOrigin);
+    header('Access-Control-Allow-Origin: ' . $canonicalOrigin);
     header('Vary: Origin');
 }
 

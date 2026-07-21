@@ -37,14 +37,24 @@
           @update:model-value="emit('update:neighborhood', $event ?? null)"
         />
       </div>
-      <Button
-        label="Bairros desejados"
-        :badge="String(preferredCount)"
-        icon="pi pi-heart"
-        severity="secondary"
-        outlined
-        @click="emit('manage-neighborhoods')"
-      />
+      <div class="flex flex-column sm:flex-row gap-2 toolbar-actions">
+        <Button
+          label="Imobiliárias"
+          :badge="String(agencyCount)"
+          icon="pi pi-building"
+          severity="secondary"
+          outlined
+          @click="emit('manage-agencies')"
+        />
+        <Button
+          label="Bairros desejados"
+          :badge="String(preferredCount)"
+          icon="pi pi-heart"
+          severity="secondary"
+          outlined
+          @click="emit('manage-neighborhoods')"
+        />
+      </div>
     </div>
   </section>
 </template>
@@ -59,6 +69,7 @@ defineProps<{
   neighborhood: string | null
   neighborhoods: string[]
   preferredCount: number
+  agencyCount: number
   counts: Record<PropertyRankingFilter, number>
 }>()
 
@@ -66,6 +77,7 @@ const emit = defineEmits<{
   'update:filter': [filter: PropertyRankingFilter]
   'update:neighborhood': [neighborhood: string | null]
   'manage-neighborhoods': []
+  'manage-agencies': []
 }>()
 
 const rankingOptions = [
@@ -85,4 +97,5 @@ const rankingOptions = [
 .filter-pills :deep(.p-button) { border-radius: 999px; }
 .filter-pills :deep(.p-badge) { min-width: 1.45rem; margin-left: .15rem; border-radius: 999px; font-variant-numeric: tabular-nums; }
 @media (max-width: 575px) { .desk-title { align-items: flex-start !important; } }
+@media (max-width: 575px) { .toolbar-actions, .toolbar-actions :deep(.p-button) { width: 100%; } }
 </style>

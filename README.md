@@ -40,6 +40,8 @@ O banco local fica em `data/casa-em-pauta.sqlite`. As migrations e os dados inic
 - Todos os votos preservam o card no lugar atual; a nova posição aparece apenas após atualizar.
 - `Muito ruim` oculta o imóvel do ranking principal; o filtro dedicado permite recuperá-lo.
 - Bairros desejados recebem prioridade e também podem ser usados como filtro.
+- O botão **Imobiliárias** cadastra nomes e palavras-chave de domínio. Novos anúncios recebem o nome automaticamente quando houver match; a ação **Reavaliar imóveis** aplica as regras ao acervo existente sem apagar correções manuais.
+- O selo da imobiliária substitui o domínio técnico no card e está sempre editável. Em agregadores como ZAP, use **Adicionar imobiliária** para escolher manualmente; depois ainda é possível voltar ao modo automático.
 - O filtro de duplicatas aponta o mesmo link sem tracking ou candidatos com mesmo bairro, quartos e área praticamente igual. Nada é excluído automaticamente.
 - A lista da casa exibe foto, descrição, preço, metadados e ações em linhas responsivas.
 - A busca textual filtra por item, categoria, origem, link ou variação após debounce de 300 ms, ignorando diferenças de maiúsculas e acentos.
@@ -86,14 +88,14 @@ Links do Zoom tentam preencher nome, imagem e menor preço pelos metadados da p�
 - `npm run typecheck`: valida o TypeScript do frontend.
 - `npm run build`: compila o frontend.
 - `npm run preview`: serve localmente o build do frontend.
-- `php api/tests/integration.php`: valida migrations, ranking, bairros, duplicatas, catálogo, variações e fallback do Zoom em um SQLite temporário.
+- `php api/tests/integration.php`: valida migrations, ranking, bairros, imobiliárias, duplicatas, catálogo, variações e fallback do Zoom em um SQLite temporário.
 
 ## Variáveis de ambiente
 
 - `FRONTEND_PORT`: porta do Vite.
 - `VITE_APP_BASE_PATH`: base do frontend; localmente `/` e em produção `/imoveis/`.
 - `VITE_API_URL`: URL base da API.
-- `APP_ORIGIN`: origem autorizada a fazer mutações na API.
+- `APP_ORIGIN`: origem adicional autorizada a acessar a API. `https://toolsfera.com` e `https://www.toolsfera.com` são sempre aceitas explicitamente.
 - `IMOVEIS_DATABASE_PATH`: caminho do SQLite.
 
 O PHP carrega apenas `APP_ORIGIN` e `IMOVEIS_DATABASE_PATH` do `.env`. O Vite carrega apenas as variáveis usadas pelo frontend. Nunca versione o `.env`.

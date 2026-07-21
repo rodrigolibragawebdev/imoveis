@@ -112,6 +112,16 @@ O aviso de `unlink(...): Resource temporarily unavailable` pode ocorrer no Windo
 - Exclusões individual e em lote exigem seleção/intenção explícita e usam o `ConfirmDialog` centralizado; não use `window.confirm` nesta feature.
 - Para seeds com origem técnica `Lista inicial`, a UI usa o CTA humano “Ver produto”.
 
+## Imobiliárias nos imóveis
+
+- `RealEstateAgencyDialog.vue` gerencia nome, palavra-chave e reavaliação; `PropertyCard.vue` apresenta a identificação e permite sobrescrita manual.
+- O match automático considera somente o hostname normalizado. Nunca procure a palavra-chave no caminho, query, título ou HTML do anúncio.
+- Nome exibido e palavra-chave são campos distintos. Normalize caixa, acentos e separadores; em múltiplos matches, escolha a palavra-chave mais longa e depois o menor ID.
+- Novos imóveis são identificados durante o cadastro. O comando de reavaliação processa apenas `agency_match_mode = 'automatic'`.
+- Escolhas manuais, inclusive a ausência explícita de imobiliária, nunca são sobrescritas por reavaliação.
+- Alterar imobiliária não atualiza `properties.updated_at`, pois esse timestamp participa do desempate do ranking.
+- O selo da imobiliária substitui o domínio técnico, deve ser operável por teclado e permanecer editável mesmo quando automático.
+
 ## Segurança
 
 - Não use `eval`, `new Function`, `innerHTML`, comandos de shell construídos com entrada externa ou desserialização insegura.
@@ -119,6 +129,7 @@ O aviso de `unlink(...): Resource temporarily unavailable` pode ocorrer no Windo
 - Não registre tokens, caminhos privados de produção ou corpos contendo dados sensíveis.
 - Toda resposta de erro usa `writeApiErrorLog()` e vai para `storage/logs` com código de correlação, status, rota e metadados seguros; nunca registre o corpo importado, cookies ou headers.
 - Trate preview de links como entrada hostil e preserve as defesas SSRF existentes.
+- Preserve a allowlist CORS exata para `toolsfera.com`, `www.toolsfera.com` e `APP_ORIGIN`; nunca substitua por `*` nem por comparação parcial de domínio.
 - A exclusão múltipla deve operar somente nos IDs validados recebidos; nunca monte SQL interpolando valores do usuário.
 - Excluir item principal na lista ativa significa soft delete por `deleted_at`; hard delete só existe nas rotas da lixeira e deve exigir `deleted_at IS NOT NULL`.
 - Exclusão, restauração e remoção permanente múltiplas não possuem limite fixo: a API divide IDs validados em blocos de 500 dentro de uma única transação.

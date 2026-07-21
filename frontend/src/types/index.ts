@@ -1,5 +1,6 @@
 export type PropertyRating = 'liked' | 'disliked' | 'terrible' | null
 export type PropertyRankingFilter = 'ranking' | 'liked' | 'unrated' | 'disliked' | 'terrible' | 'duplicates'
+export type PropertyAgencyMatchMode = 'automatic' | 'manual'
 
 export interface DuplicateMatch {
   propertyId: number
@@ -16,6 +17,9 @@ export interface Property {
   imageUrl: string | null
   price: number | null
   source: string
+  agencyId: number | null
+  agencyName: string | null
+  agencyMatchMode: PropertyAgencyMatchMode
   location: string | null
   neighborhood: string | null
   rating: PropertyRating
@@ -42,6 +46,21 @@ export interface FurnitureCategory {
   name: string
   color: string
   createdAt: string
+}
+
+export interface RealEstateAgency {
+  id: number
+  name: string
+  keyword: string
+  normalizedKeyword: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AgencyReevaluationResult {
+  evaluated: number
+  matched: number
+  changed: number
 }
 
 export interface FurnitureVariation {
