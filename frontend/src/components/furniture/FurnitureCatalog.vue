@@ -6,6 +6,7 @@
         <h1 class="display-font catalog-title">A casa,<br /><em>peça por peça.</em></h1>
       </div>
       <div class="header-actions">
+        <Button label="Lixeira" icon="pi pi-history" severity="secondary" text @click="trashDialog = true" />
         <Button label="Importar JSON" icon="pi pi-file-import" severity="secondary" outlined @click="importDialog = true" />
         <Button label="Nova categoria" icon="pi pi-folder-plus" severity="secondary" outlined @click="categoryDialog = true" />
         <Button label="Adicionar item" icon="pi pi-plus" @click="openCreate" />
@@ -61,6 +62,9 @@
           @purchase="setPurchased"
           @edit="openEdit"
           @delete="requestRemoveItem"
+          @add-variation="openCreateVariation"
+          @edit-variation="openEditVariation"
+          @delete-variation="requestRemoveVariation"
         />
       </TransitionGroup>
       <div v-else class="empty-state">
@@ -83,7 +87,23 @@
       v-model="importDialog"
       :categories="store.categories"
       :saving="store.saving"
+      :progress="store.importProgress"
       @submit="importItems"
+    />
+    <FurnitureVariationForm
+      v-model="variationDialog"
+      :item="variationParent"
+      :variation="editingVariation"
+      :saving="store.saving"
+      @submit="saveVariation"
+    />
+    <FurnitureTrashDialog
+      v-model="trashDialog"
+      :items="store.trashItems"
+      :loading="store.trashLoading"
+      :saving="store.saving"
+      @restore="restoreItem"
+      @restore-all="restoreAllItems"
     />
   </section>
 </template>
@@ -101,8 +121,10 @@ import FurnitureFilters from './FurnitureFilters.vue'
 import FurnitureImportDialog from './FurnitureImportDialog.vue'
 import FurnitureItemForm from './FurnitureItemForm.vue'
 import FurnitureListItem from './FurnitureListItem.vue'
+import FurnitureTrashDialog from './FurnitureTrashDialog.vue'
+import FurnitureVariationForm from './FurnitureVariationForm.vue'
 import { useFurnitureStore } from '@/stores/furniture'
-import type { FurnitureItem, FurnitureItemInput } from '@/types'
+import type { FurnitureItem, FurnitureItemInput, FurnitureVariation, FurnitureVariationInput } from '@/types'
 
 const store = useFurnitureStore()
 const toast = useToast()
@@ -110,7 +132,11 @@ const confirm = useConfirm()
 const categoryDialog = shallowRef(false)
 const itemDialog = shallowRef(false)
 const importDialog = shallowRef(false)
+const trashDialog = shallowRef(false)
+const variationDialog = shallowRef(false)
 const editingItem = shallowRef<FurnitureItem | null>(null)
+const variationParent = shallowRef<FurnitureItem | null>(null)
+const editingVariation = shallowRef<FurnitureVariation | null>(null)
 const selectedIds = shallowRef<number[]>([])
 
 const allVisibleSelected = computed(() => store.items.length > 0 && store.items.every((item) => selectedIds.value.includes(item.id)))
@@ -120,6 +146,22 @@ const listSummary = computed(() => `${store.items.length} ${store.items.length =
 onMounted(store.initialize)
 watch(itemDialog, (isOpen) => {
   if (!isOpen) editingItem.value = null
+})
+watch(variationDialog, (isOpen) => {
+  if (isOpen) return
+  variationParent.value = null
+  editingVariation.value = null
+})
+watch(importDialog, (isOpen) => {
+  if (!isOpen) store.clearImportProgress()
+})
+watch(trashDialog, async (isOpen) => {
+  if (!isOpen) return
+  try {
+    await store.loadTrash()
+  } catch {
+    showError('Não foi possível abrir a lixeira')
+  }
 })
 watch(() => store.items.map((item) => item.id), (visibleIds) => {
   const visible = new Set(visibleIds)
@@ -134,6 +176,18 @@ function openCreate() {
 function openEdit(item: FurnitureItem) {
   editingItem.value = item
   itemDialog.value = true
+}
+
+function openCreateVariation(item: FurnitureItem) {
+  variationParent.value = item
+  editingVariation.value = null
+  variationDialog.value = true
+}
+
+function openEditVariation(item: FurnitureItem, variation: FurnitureVariation) {
+  variationParent.value = item
+  editingVariation.value = variation
+  variationDialog.value = true
 }
 
 function setSelected(id: number, selected: boolean) {
@@ -175,16 +229,39 @@ async function saveItem(payload: FurnitureItemInput) {
 
 async function importItems(items: FurnitureItemInput[]) {
   try {
-    await store.importItems(items)
+    const result = await store.importItems(items)
     importDialog.value = false
+    const importedCount = result.importedItems.length + result.importedInPreviousAttempts
+    const ignoredCount = Math.max(0, items.length - importedCount)
     toast.add({
       severity: 'success',
-      summary: 'Lista importada',
-      detail: `${items.length} ${items.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'}.`,
+      summary: result.resumed ? 'Importação retomada e concluída' : 'Lista importada',
+      detail: `${importedCount} ${importedCount === 1 ? 'item foi adicionado' : 'itens foram adicionados'} em ${result.totalBatches} ${result.totalBatches === 1 ? 'lote' : 'lotes'}.${ignoredCount ? ` ${ignoredCount} ${ignoredCount === 1 ? 'nome repetido foi ignorado' : 'nomes repetidos foram ignorados'}.` : ''}`,
       life: 3200,
     })
   } catch {
     showError('Não foi possível importar')
+  }
+}
+
+async function saveVariation(payload: FurnitureVariationInput) {
+  if (!variationParent.value) return
+  try {
+    const wasEditing = Boolean(editingVariation.value)
+    if (editingVariation.value) {
+      await store.updateVariation(variationParent.value.id, editingVariation.value.id, payload)
+    } else {
+      await store.addVariation(variationParent.value.id, payload)
+    }
+    variationDialog.value = false
+    toast.add({
+      severity: 'success',
+      summary: wasEditing ? 'Variação atualizada' : 'Variação adicionada',
+      detail: wasEditing ? 'A opção foi atualizada dentro do item.' : 'A nova opção já aparece abaixo do item principal.',
+      life: 3000,
+    })
+  } catch {
+    showError('Não foi possível salvar a variação')
   }
 }
 
@@ -205,11 +282,11 @@ function requestRemoveItem(id: number) {
   const item = store.items.find((candidate) => candidate.id === id)
   if (!item) return
   confirm.require({
-    header: 'Excluir item?',
-    message: `“${item.title}” será removido permanentemente da lista da casa.`,
+    header: 'Mover item para a lixeira?',
+    message: `“${item.title}” ficará inativo e poderá ser restaurado depois.`,
     icon: 'pi pi-trash',
     rejectLabel: 'Cancelar',
-    acceptLabel: 'Excluir',
+    acceptLabel: 'Mover para a lixeira',
     rejectProps: { severity: 'secondary', outlined: true },
     acceptProps: { severity: 'danger', icon: 'pi pi-trash' },
     defaultFocus: 'reject',
@@ -222,9 +299,33 @@ async function removeItem(id: number) {
   try {
     await store.removeItem(id)
     selectedIds.value = selectedIds.value.filter((selectedId) => selectedId !== id)
-    toast.add({ severity: 'secondary', summary: 'Item removido', life: 2200 })
+    toast.add({ severity: 'secondary', summary: 'Item movido para a lixeira', detail: 'Você pode restaurá-lo pela lixeira da lista.', life: 3000 })
   } catch {
     showError('Não foi possível remover')
+  }
+}
+
+function requestRemoveVariation(item: FurnitureItem, variation: FurnitureVariation) {
+  confirm.require({
+    header: 'Excluir variação?',
+    message: `“${variation.title}” será removida de “${item.title}”. O item principal será mantido.`,
+    icon: 'pi pi-trash',
+    rejectLabel: 'Cancelar',
+    acceptLabel: 'Excluir variação',
+    rejectProps: { severity: 'secondary', outlined: true },
+    acceptProps: { severity: 'danger', icon: 'pi pi-trash' },
+    defaultFocus: 'reject',
+    blockScroll: true,
+    accept: () => removeVariation(item.id, variation.id),
+  })
+}
+
+async function removeVariation(itemId: number, variationId: number) {
+  try {
+    await store.removeVariation(itemId, variationId)
+    toast.add({ severity: 'secondary', summary: 'Variação removida', detail: 'O item principal foi mantido.', life: 2400 })
+  } catch {
+    showError('Não foi possível remover a variação')
   }
 }
 
@@ -232,13 +333,13 @@ async function removeSelected() {
   const count = selectedIds.value.length
   if (!count) return
   confirm.require({
-    header: count === 1 ? 'Excluir item selecionado?' : `Excluir ${count} itens selecionados?`,
+    header: count === 1 ? 'Mover item para a lixeira?' : `Mover ${count} itens para a lixeira?`,
     message: count === 1
-      ? 'O item selecionado será removido permanentemente da lista da casa.'
-      : 'Todos os itens selecionados serão removidos permanentemente da lista da casa.',
+      ? 'O item selecionado ficará inativo e poderá ser restaurado depois.'
+      : 'Os itens selecionados ficarão inativos e poderão ser restaurados depois.',
     icon: 'pi pi-exclamation-triangle',
     rejectLabel: 'Cancelar',
-    acceptLabel: count === 1 ? 'Excluir item' : `Excluir ${count} itens`,
+    acceptLabel: count === 1 ? 'Mover item' : `Mover ${count} itens`,
     rejectProps: { severity: 'secondary', outlined: true },
     acceptProps: { severity: 'danger', icon: 'pi pi-trash' },
     defaultFocus: 'reject',
@@ -253,9 +354,28 @@ async function removeSelectedItems() {
   try {
     await store.removeItems(selectedIds.value)
     selectedIds.value = []
-    toast.add({ severity: 'secondary', summary: 'Itens removidos', detail: `${count} ${count === 1 ? 'item excluído' : 'itens excluídos'}.`, life: 2600 })
+    toast.add({ severity: 'secondary', summary: 'Itens movidos para a lixeira', detail: `${count} ${count === 1 ? 'item pode ser restaurado' : 'itens podem ser restaurados'}.`, life: 3000 })
   } catch {
-    showError('Não foi possível excluir a seleção')
+    showError('Não foi possível mover a seleção')
+  }
+}
+
+async function restoreItem(id: number) {
+  try {
+    await store.restoreItem(id)
+    toast.add({ severity: 'success', summary: 'Item restaurado', detail: 'Ele voltou para a lista ativa.', life: 2600 })
+  } catch {
+    showError('Não foi possível restaurar')
+  }
+}
+
+async function restoreAllItems(ids: number[]) {
+  if (!ids.length) return
+  try {
+    await store.restoreItems(ids)
+    toast.add({ severity: 'success', summary: 'Lixeira restaurada', detail: `${ids.length} ${ids.length === 1 ? 'item voltou' : 'itens voltaram'} para a lista ativa.`, life: 3000 })
+  } catch {
+    showError('Não foi possível restaurar a lixeira')
   }
 }
 

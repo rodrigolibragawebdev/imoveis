@@ -16,7 +16,7 @@
       </div>
       <div class="col-12">
         <label for="item-title" class="block font-bold mb-2">Nome</label>
-        <InputText id="item-title" v-model="title" class="w-full" placeholder="Deixe vazio para usar o nome do site" maxlength="140" />
+        <InputText id="item-title" v-model="title" class="w-full" placeholder="Deixe vazio para usar o nome do site" />
       </div>
       <div class="col-12">
         <label for="item-image" class="block font-bold mb-2">Imagem <span class="font-normal opacity-50">(opcional)</span></label>

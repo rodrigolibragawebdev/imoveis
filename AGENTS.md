@@ -91,7 +91,7 @@ O aviso de `unlink(...): Resource temporarily unavailable` pode ocorrer no Windo
 - Valide tipo, tamanho, faixa, cardinalidade e protocolo de qualquer entrada antes de consultar ou gravar.
 - Erros esperados usam `ApiException` com mensagem pública em português; exceções internas nunca expõem detalhes ao cliente.
 - URLs externas aceitam apenas HTTP(S), sem credenciais, e passam pelas proteções de preview contra destinos privados.
-- Operações em lote devem impor limite, remover duplicatas e usar transação quando a intenção for tudo-ou-nada.
+- Operações em lote devem impor limite técnico proporcional, remover duplicatas conforme a regra da feature e usar transação quando a intenção for tudo-ou-nada.
 - Mudanças de schema sempre entram em uma nova migration numerada. Nunca reescreva uma migration já aplicada.
 - Toda resposta de entidade passa pelo serializer correspondente.
 - O banco de produção permanece fora de `public_html`; nunca versione SQLite, `.env`, credenciais ou uploads.
@@ -99,11 +99,16 @@ O aviso de `unlink(...): Resource temporarily unavailable` pode ocorrer no Windo
 ## Lista da casa
 
 - `FurnitureCatalog.vue` orquestra filtros, seleção, diálogos e toasts.
-- `FurnitureListItem.vue` apresenta foto, descrição, preço, metadados, compra e CTAs.
+- `FurnitureListItem.vue` apresenta o item principal e suas variações aninhadas, com hierarquia visual explícita.
+- `FurnitureVariationForm.vue` recebe apenas o link como obrigatório e permite complementar nome, imagem e preço.
 - `FurnitureImportDialog.vue` lê arquivo/textarea, mostra o exemplo e normaliza categorias antes do envio.
 - `furniture.ts` é a fonte única de itens, filtros e operações remotas.
 - O status `isPurchased` é persistido; atualizações otimistas devem reverter em caso de erro.
-- Importação JSON aceita no máximo 50 itens e é atômica.
+- Importação JSON não possui limite fixo de itens na API, respeita o corpo técnico de 100 KB e é dividida pelo frontend em requisições sequenciais de até 10 itens; cada requisição é atômica.
+- Cada lote concluído atualiza um checkpoint no `localStorage`, indexado pelo SHA-256 do conteúdo normalizado. Em falha, a mesma lista retoma do primeiro lote pendente.
+- Na importação, duplicata significa somente nome normalizado igual (ignorando caixa, acentos e espaços repetidos). URL repetida com nomes diferentes é válida.
+- Títulos de itens e variações não possuem limite específico de caracteres; valide apenas que sejam textos não vazios quando obrigatórios.
+- Variações pertencem a um único item, usam links únicos no catálogo e são excluídas em cascata com o item principal.
 - Exclusões individual e em lote exigem seleção/intenção explícita e usam o `ConfirmDialog` centralizado; não use `window.confirm` nesta feature.
 - Para seeds com origem técnica `Lista inicial`, a UI usa o CTA humano “Ver produto”.
 
@@ -112,8 +117,12 @@ O aviso de `unlink(...): Resource temporarily unavailable` pode ocorrer no Windo
 - Não use `eval`, `new Function`, `innerHTML`, comandos de shell construídos com entrada externa ou desserialização insegura.
 - Não relaxe CORS, os headers de segurança ou os limites de `jsonBody()` sem justificar e testar.
 - Não registre tokens, caminhos privados de produção ou corpos contendo dados sensíveis.
+- Erros 500 usam `writeApiErrorLog()` e vão para `storage/logs` com código de correlação, rota e metadados do lote; nunca registre o corpo importado, cookies ou headers.
 - Trate preview de links como entrada hostil e preserve as defesas SSRF existentes.
 - A exclusão múltipla deve operar somente nos IDs validados recebidos; nunca monte SQL interpolando valores do usuário.
+- Excluir item principal significa soft delete por `deleted_at`; não remova fisicamente itens da casa em rotas normais.
+- Exclusão e restauração múltiplas não possuem limite fixo: a API divide IDs validados em blocos de 500 dentro de uma única transação.
+- Consultas da lista ativa sempre filtram `deleted_at IS NULL`; a lixeira é o único fluxo que lista inativos.
 
 ## Git e escopo
 

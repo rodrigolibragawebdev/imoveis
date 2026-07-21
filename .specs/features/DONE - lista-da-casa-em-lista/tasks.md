@@ -18,4 +18,7 @@
 - [x] **T6 — Validação e documentação**
   - Atualizar teste, README, specs, AGENTS.md e CLAUDE.md.
   - Gate: typecheck, build, PHP lint, integração e diff check.
-
+- [x] **T7 — Importação retomável e diagnóstico**
+  - Fracionar em lotes de 10, exibir progresso e persistir checkpoint por conteúdo no `localStorage`.
+  - Registrar erros 500 com código de correlação em `storage/logs`, sem dados do payload.
+  - Gate: retomada idempotente por nome, orçamento de preview, logger correlacionado e smoke HTTP.

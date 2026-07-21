@@ -261,14 +261,19 @@ function assertPublicPreviewHost(string $host): ?string
 }
 
 /** @return array{html: string, finalUrl: string} */
-function fetchPreviewHtml(string $initialUrl): array
+function fetchPreviewHtml(string $initialUrl, int $timeoutSeconds = 8): array
 {
     if (!extension_loaded('curl')) {
         throw new RuntimeException('A extensão curl precisa estar ativa para buscar os dados do link');
     }
 
     $currentUrl = $initialUrl;
+    $deadline = microtime(true) + max(1, $timeoutSeconds);
     for ($redirect = 0; $redirect <= PREVIEW_MAX_REDIRECTS; $redirect++) {
+        if ($redirect > 0 && microtime(true) >= $deadline) {
+            throw new RuntimeException('O site demorou demais para responder');
+        }
+        $remainingSeconds = max(1, (int) ceil($deadline - microtime(true)));
         $parts = parse_url($currentUrl);
         $scheme = strtolower((string) ($parts['scheme'] ?? ''));
         $host = (string) ($parts['host'] ?? '');
@@ -291,8 +296,8 @@ function fetchPreviewHtml(string $initialUrl): array
 
         $options = [
             CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_CONNECTTIMEOUT => 4,
-            CURLOPT_TIMEOUT => 8,
+            CURLOPT_CONNECTTIMEOUT => min(4, $remainingSeconds),
+            CURLOPT_TIMEOUT => $remainingSeconds,
             CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; CasaEmPauta/1.0; +https://www.toolsfera.com/imoveis/)',
@@ -512,7 +517,7 @@ function zoomPriceFromHtml(string $html): ?float
 }
 
 /** @return array{url: string, title: string, imageUrl: ?string, price: ?float, source: string, location: ?string} */
-function linkPreview(string $url): array
+function linkPreview(string $url, int $timeoutSeconds = 8): array
 {
     $requestedUrl = canonicalHttpUrl($url);
     $parts = parse_url($requestedUrl);
@@ -520,7 +525,7 @@ function linkPreview(string $url): array
     $fallback = propertyUrlMetadata($requestedUrl);
 
     try {
-        $response = fetchPreviewHtml($requestedUrl);
+        $response = fetchPreviewHtml($requestedUrl, $timeoutSeconds);
         $document = new DOMDocument();
         $previousErrors = libxml_use_internal_errors(true);
         $loaded = $document->loadHTML($response['html'], LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
@@ -560,7 +565,7 @@ function linkPreview(string $url): array
 
         return [
             'url' => $requestedUrl,
-            'title' => mb_substr(trim($title), 0, 180),
+            'title' => trim($title),
             'imageUrl' => $imageUrl,
             'price' => parsePreviewPrice($rawPrice) ?? $fallback['price'],
             'source' => $source,

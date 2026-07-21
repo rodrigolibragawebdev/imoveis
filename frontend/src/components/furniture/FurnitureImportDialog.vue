@@ -5,7 +5,7 @@
         <div class="editor-heading">
           <div>
             <strong>Conteúdo do arquivo</strong>
-            <small>Cole o JSON ou escolha um arquivo com até 50 itens.</small>
+            <small>Cole o JSON ou escolha um arquivo de até 100 KB, sem limite de itens.</small>
           </div>
           <Button label="Escolher .json" icon="pi pi-upload" size="small" severity="secondary" outlined @click="openFilePicker" />
           <input ref="fileInput" type="file" accept="application/json,.json" class="file-input" @change="readFile" />
@@ -14,6 +14,19 @@
         <Message v-if="validationError" severity="error" :closable="false" class="validation-message">{{ validationError }}</Message>
         <Message v-else-if="parsedItems.length" severity="success" :closable="false" class="validation-message">
           {{ parsedItems.length }} {{ parsedItems.length === 1 ? 'item pronto' : 'itens prontos' }} para importar.
+          <span v-if="duplicateCount"> {{ duplicateCount }} {{ duplicateCount === 1 ? 'nome repetido foi ignorado' : 'nomes repetidos foram ignorados' }}.</span>
+          <span class="import-plan">Vamos enviar em {{ batchCount }} {{ batchCount === 1 ? 'lote' : 'lotes' }} de até 10 itens.</span>
+        </Message>
+        <Message
+          v-if="progress"
+          :severity="progress.status === 'failed' ? 'error' : progress.status === 'completed' ? 'success' : 'info'"
+          :closable="false"
+          class="validation-message progress-message"
+        >
+          <strong>Requisição {{ progress.current }} de {{ progress.total }}</strong>
+          <span v-if="progress.status === 'running'">Enviando {{ progress.batchSize }} {{ progress.batchSize === 1 ? 'item' : 'itens' }}. {{ progress.completed }} {{ progress.completed === 1 ? 'lote concluído' : 'lotes concluídos' }}.</span>
+          <span v-else-if="progress.status === 'failed'">Falhou após {{ progress.completed }} {{ progress.completed === 1 ? 'lote salvo' : 'lotes salvos' }}. Ao tentar novamente, continuaremos desse ponto.</span>
+          <span v-else>Todos os lotes foram concluídos.</span>
         </Message>
       </section>
 
@@ -32,7 +45,7 @@
     <template #footer>
       <Button label="Cancelar" severity="secondary" text @click="visible = false" />
       <Button
-        label="Importar itens"
+        :label="importButtonLabel"
         icon="pi pi-file-import"
         :loading="saving"
         :disabled="Boolean(validationError) || parsedItems.length === 0"
@@ -49,6 +62,7 @@ import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import Textarea from 'primevue/textarea'
 import type { FurnitureCategory, FurnitureItemInput } from '@/types'
+import type { FurnitureImportProgress } from '@/stores/furniture'
 
 interface ImportItem {
   category?: unknown
@@ -59,12 +73,17 @@ interface ImportItem {
   price?: unknown
 }
 
-const props = defineProps<{ categories: FurnitureCategory[]; saving: boolean }>()
+const props = defineProps<{
+  categories: FurnitureCategory[]
+  saving: boolean
+  progress?: FurnitureImportProgress | null
+}>()
 const emit = defineEmits<{ submit: [items: FurnitureItemInput[]] }>()
 const visible = defineModel<boolean>({ required: true })
 const jsonText = shallowRef('')
 const parsedItems = shallowRef<FurnitureItemInput[]>([])
 const validationError = shallowRef('')
+const duplicateCount = shallowRef(0)
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 
 const fallbackCategory = computed(() => props.categories[0])
@@ -85,6 +104,13 @@ const exampleJson = computed(() => JSON.stringify({
   ],
 }, null, 2))
 const categoryNames = computed(() => props.categories.map((category) => category.name).join(', ') || 'Crie uma categoria primeiro')
+const batchCount = computed(() => Math.ceil(parsedItems.value.length / 10))
+const importButtonLabel = computed(() => {
+  if (!props.progress) return 'Importar itens'
+  if (props.progress.status === 'failed') return `Retentar do lote ${props.progress.completed + 1}`
+  if (props.progress.status === 'completed') return 'Importação concluída'
+  return `Enviando lote ${props.progress.current} de ${props.progress.total}`
+})
 
 watch(jsonText, validateJson)
 watch(visible, (isVisible) => {
@@ -115,6 +141,7 @@ function useExample() {
 function validateJson(value: string) {
   parsedItems.value = []
   validationError.value = ''
+  duplicateCount.value = 0
   if (!value.trim()) {
     validationError.value = 'Cole um JSON ou escolha um arquivo.'
     return
@@ -137,14 +164,9 @@ function validateJson(value: string) {
     validationError.value = 'Use um objeto com a propriedade “items” contendo pelo menos um item.'
     return
   }
-  if (rawItems.length > 50) {
-    validationError.value = 'Importe no máximo 50 itens por vez.'
-    return
-  }
-
   const categoriesByName = new Map(props.categories.map((category) => [category.name.toLocaleLowerCase('pt-BR'), category.id]))
   const categoryIds = new Set(props.categories.map((category) => category.id))
-  const urls = new Set<string>()
+  const names = new Set<string>()
   const normalized: FurnitureItemInput[] = []
 
   for (const [index, rawItem] of rawItems.entries()) {
@@ -168,15 +190,17 @@ function validateJson(value: string) {
       return
     }
     const url = item.url.trim()
-    if (urls.has(url)) {
-      validationError.value = `O link do item ${position} está repetido no JSON.`
+    if (item.title !== undefined && typeof item.title !== 'string') {
+      validationError.value = `O título do item ${position} precisa ser um texto.`
       return
     }
-    urls.add(url)
-    if (item.title !== undefined && (typeof item.title !== 'string' || item.title.trim().length > 140)) {
-      validationError.value = `O título do item ${position} precisa ser um texto de até 140 caracteres.`
-      return
+    const title = typeof item.title === 'string' ? item.title.trim() : ''
+    const nameKey = title ? normalizedNameKey(title) : ''
+    if (nameKey && names.has(nameKey)) {
+      duplicateCount.value++
+      continue
     }
+    if (nameKey) names.add(nameKey)
     if (item.imageUrl !== undefined && (typeof item.imageUrl !== 'string' || (item.imageUrl !== '' && !isHttpUrl(item.imageUrl)))) {
       validationError.value = `A imagem do item ${position} precisa ser um link http(s).`
       return
@@ -188,7 +212,7 @@ function validateJson(value: string) {
     normalized.push({
       categoryId,
       url,
-      title: typeof item.title === 'string' ? item.title.trim() || undefined : undefined,
+      title: title || undefined,
       imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl.trim() || undefined : undefined,
       price: typeof item.price === 'number' ? item.price : undefined,
     })
@@ -205,6 +229,15 @@ function isHttpUrl(value: string) {
   }
 }
 
+function normalizedNameKey(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLocaleLowerCase('pt-BR')
+}
+
 function submit() {
   if (!validationError.value && parsedItems.value.length) emit('submit', parsedItems.value)
 }
@@ -219,6 +252,8 @@ function submit() {
 .file-input { display: none; }
 .json-input { width: 100%; font-family: 'Consolas', 'Courier New', monospace; font-size: .8rem; line-height: 1.55; resize: vertical; }
 .validation-message { margin: .75rem 0 0; }
+.import-plan { display: block; margin-top: .25rem; }
+.progress-message :deep(.p-message-text) { display: flex; flex-direction: column; gap: .2rem; }
 .example-panel { padding: 1rem; border-radius: 1rem; color: var(--cream); background: var(--forest); }
 .example-panel p { margin: .55rem 0 .9rem; font-size: .8rem; line-height: 1.5; opacity: .72; }
 .example-eyebrow { color: #e9b89f; font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }

@@ -9,5 +9,10 @@
 - Portas padrão 5176 (web) e 5177 (API), livres na máquina em 14/07/2026 e configuráveis por ambiente.
 - Lista da casa em linhas responsivas para privilegiar comparação rápida e ações operacionais.
 - Status de compra persistido em `furniture_items.is_purchased`, com atualização otimista e rollback no frontend.
-- Importação de móveis limitada a 50 itens e gravada em transação; exclusão em lote limitada a 100 IDs validados.
+- Importação de móveis sem limite fixo de quantidade, limitada pelo corpo técnico de 100 KB e enviada em requisições sequenciais de até 10 itens; cada requisição grava em transação. A exclusão em lote aceita todos os IDs validados e os processa em blocos de 500 dentro de uma única transação.
+- Checkpoints de importação ficam no `localStorage`, indexados pelo hash do conteúdo normalizado, e avançam somente após resposta bem-sucedida do lote.
+- Na importação, somente nomes normalizados iguais são duplicatas; URL repetida com nomes diferentes é aceita. Títulos não possuem limite específico de caracteres.
 - JSON de importação usa nome de categoria na interface por legibilidade e `categoryId` no contrato canônico da API.
+- Variações são registros filhos do item principal, com URL única e exclusão em cascata; somente o link é obrigatório para criar uma opção.
+- Falhas 500 possuem código de correlação e log JSON Lines diário em `storage/logs`, sem corpo, headers ou cookies da requisição.
+- Itens principais usam soft delete com `deleted_at`; ficam fora da lista ativa, permanecem com suas variações e podem ser restaurados individualmente ou em lote. A interface não oferece hard delete.

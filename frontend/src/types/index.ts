@@ -44,6 +44,18 @@ export interface FurnitureCategory {
   createdAt: string
 }
 
+export interface FurnitureVariation {
+  id: number
+  itemId: number
+  url: string
+  title: string
+  imageUrl: string | null
+  price: number | null
+  source: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface FurnitureItem {
   id: number
   categoryId: number
@@ -56,12 +68,21 @@ export interface FurnitureItem {
   source: string
   isSeeded: boolean
   isPurchased: boolean
+  deletedAt: string | null
+  variations: FurnitureVariation[]
   createdAt: string
   updatedAt: string
 }
 
 export interface FurnitureItemInput {
   categoryId: number
+  url: string
+  title?: string
+  imageUrl?: string
+  price?: number
+}
+
+export interface FurnitureVariationInput {
   url: string
   title?: string
   imageUrl?: string

@@ -42,9 +42,15 @@ O banco local fica em `data/casa-em-pauta.sqlite`. As migrations e os dados inic
 - Bairros desejados recebem prioridade e também podem ser usados como filtro.
 - O filtro de duplicatas aponta o mesmo link sem tracking ou candidatos com mesmo bairro, quartos e área praticamente igual. Nada é excluído automaticamente.
 - A lista da casa exibe foto, descrição, preço, metadados e ações em linhas responsivas.
-- Itens podem ser marcados como comprados, editados ou removidos; o status permanece após recarregar.
-- A seleção permite excluir vários itens de uma vez após confirmação.
-- O botão **Importar JSON** aceita texto colado ou arquivo `.json` com até 50 itens.
+- Itens podem ser marcados como comprados, editados ou movidos para a lixeira; o status permanece após recarregar.
+- A seleção permite mover todos os itens desejados para a lixeira após confirmação, sem limite fixo de quantidade.
+- A **Lixeira** mantém itens inativos no banco, preserva suas variações e permite restaurar um item ou todos de uma vez.
+- O botão **Importar JSON** aceita texto colado ou arquivo `.json` de até 100 KB, sem limite fixo de itens na API. A interface envia lotes sequenciais de até 10 itens e mostra cada requisição.
+- Ao concluir um lote, o navegador grava um checkpoint no `localStorage`, identificado pelo conteúdo normalizado do arquivo. Se uma requisição falhar, repetir a importação continua do primeiro lote pendente.
+- Duplicatas da importação são definidas somente pelo nome normalizado (sem diferença de maiúsculas, acentos ou espaços repetidos). URLs iguais com nomes diferentes são aceitas.
+- Títulos não possuem limite próprio de caracteres; continuam sujeitos ao limite total de 100 KB do JSON.
+- Falhas internas recebem um código e são registradas em `storage/logs/api-AAAA-MM-DD.log`; os arquivos `.log` não são versionados nem acessíveis pela web.
+- Cada item possui o botão **+ Variações** logo abaixo da linha principal. Basta informar outro link; nome, imagem e preço são capturados quando disponíveis e podem ser corrigidos manualmente.
 
 Exemplo de importação:
 
@@ -79,7 +85,7 @@ Links do Zoom tentam preencher nome, imagem e menor preço pelos metadados da p�
 - `npm run typecheck`: valida o TypeScript do frontend.
 - `npm run build`: compila o frontend.
 - `npm run preview`: serve localmente o build do frontend.
-- `php api/tests/integration.php`: valida migrations, ranking, bairros, duplicatas e fallback do Zoom em um SQLite temporário.
+- `php api/tests/integration.php`: valida migrations, ranking, bairros, duplicatas, catálogo, variações e fallback do Zoom em um SQLite temporário.
 
 ## Variáveis de ambiente
 

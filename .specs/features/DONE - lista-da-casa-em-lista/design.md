@@ -7,10 +7,10 @@ A migration `008_furniture_purchase_status.php` adiciona `furniture_items.is_pur
 Endpoints:
 
 - `PATCH /furniture/items/:id/purchased`: valida booleano e atualiza o status.
-- `POST /furniture/items/bulk`: valida de 1 a 50 itens, impede duplicatas, prepara previews e grava tudo em transação.
-- `DELETE /furniture/items/bulk`: valida de 1 a 100 IDs positivos e exclui com placeholders preparados.
+- `POST /furniture/items/bulk`: valida o lote recebido, resolve os previews, ignora nomes normalizados já vistos e grava a requisição em transação. A migration `010_allow_repeated_furniture_urls.php` permite URLs iguais em itens principais com nomes diferentes.
+- `DELETE /furniture/items/bulk`: valida todos os IDs positivos e aplica soft delete em blocos de 500 dentro de uma única transação.
 
-O frontend converte `category` por nome em `categoryId`; a API recebe somente o contrato canônico tipado. A store aplica compra de forma otimista e reverte se a API falhar.
+O frontend converte `category` por nome em `categoryId`; a API recebe somente o contrato canônico tipado. A store divide a lista em lotes sequenciais de até 10 itens, calcula SHA-256 do conteúdo normalizado, salva o número de lotes concluídos no `localStorage` e expõe o progresso. A store aplica compra de forma otimista e reverte se a API falhar.
 
 ## Componentes
 
@@ -32,7 +32,9 @@ O frontend converte `category` por nome em `categoryId`; a API recebe somente o 
 
 - Arquivo local limitado a 100 KB no cliente.
 - Corpo geral limitado por `jsonBody()` na API.
-- Lote limitado a 50 itens e exclusão a 100 IDs.
+- Arquivo sem limite fixo de contagem, limitado a 100 KB e repartido pelo frontend em lotes de até 10 itens; importação e exclusão não possuem teto fixo de quantidade na API.
 - URLs aceitam apenas HTTP(S), sem credenciais.
 - Nenhum HTML importado é renderizado como markup.
-- SQL usa consultas preparadas; gravação do lote usa transação.
+- SQL usa consultas preparadas; cada requisição de importação usa transação.
+- Previews da importação possuem orçamento total de 2 segundos por link para o lote não exceder o tempo usual da hospedagem.
+- `writeApiErrorLog()` grava JSON Lines diário em `storage/logs`; a resposta expõe apenas o código de correlação.

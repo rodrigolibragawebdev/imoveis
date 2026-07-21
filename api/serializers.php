@@ -34,7 +34,26 @@ function mapCategory(array $row): array
 }
 
 /** @param array<string, mixed> $row */
-function mapFurniture(array $row): array
+function mapFurnitureVariation(array $row): array
+{
+    return [
+        'id' => (int) $row['id'],
+        'itemId' => (int) $row['item_id'],
+        'url' => (string) $row['url'],
+        'title' => (string) $row['title'],
+        'imageUrl' => $row['image_url'] !== null ? (string) $row['image_url'] : null,
+        'price' => $row['price'] !== null ? (float) $row['price'] : null,
+        'source' => (string) $row['source'],
+        'createdAt' => (string) $row['created_at'],
+        'updatedAt' => (string) $row['updated_at'],
+    ];
+}
+
+/**
+ * @param array<string, mixed> $row
+ * @param array<int, array<string, mixed>> $variations
+ */
+function mapFurniture(array $row, array $variations = []): array
 {
     return [
         'id' => (int) $row['id'],
@@ -48,6 +67,8 @@ function mapFurniture(array $row): array
         'source' => (string) $row['source'],
         'isSeeded' => (bool) $row['is_seeded'],
         'isPurchased' => (bool) ($row['is_purchased'] ?? false),
+        'deletedAt' => isset($row['deleted_at']) && $row['deleted_at'] !== null ? (string) $row['deleted_at'] : null,
+        'variations' => array_map('mapFurnitureVariation', $variations),
         'createdAt' => (string) $row['created_at'],
         'updatedAt' => (string) ($row['updated_at'] ?? $row['created_at']),
     ];

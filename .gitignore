@@ -2,6 +2,8 @@ node_modules/
 dist/
 .env
 data/
+storage/logs/*.log
+!storage/logs/.gitkeep
 *.db
 *.db-shm
 *.db-wal

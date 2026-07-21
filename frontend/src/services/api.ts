@@ -7,8 +7,10 @@ export const api = axios.create({
 })
 
 export function getApiError(error: unknown) {
-  if (axios.isAxiosError<{ message?: string }>(error)) {
-    return error.response?.data?.message ?? 'Não foi possível conversar com a API.'
+  if (axios.isAxiosError<{ message?: string; errorId?: string }>(error)) {
+    const message = error.response?.data?.message ?? 'Não foi possível conversar com a API.'
+    const errorId = error.response?.data?.errorId
+    return errorId ? `${message} Código do erro: ${errorId}.` : message
   }
   return 'Ocorreu um erro inesperado.'
 }
