@@ -15,7 +15,7 @@ Views de rota são superfícies de composição. Stores Pinia cuidam de carregam
 - `PropertyLinkForm`: recebe links em lote e emite submissão.
 - `PropertyCard`: apresenta e edita avaliação/nota sem navegação interna.
 - `FurnitureCatalog`: orquestra categorias, filtros e itens.
-- `FurnitureForm`: cadastra categoria e item.
+- `CategoryForm` e `FurnitureItemForm`: cadastram categoria e criam/editam item.
 - `FurnitureFilters`: emite filtro e ordenação.
-- `FurnitureCard`: apresenta item e ação de remoção.
+- `FurnitureListItem`: apresenta item e ações; evolução detalhada em `DONE - lista-da-casa-em-lista`.
 - `TipsView`: compõe conteúdo editorial futuro.

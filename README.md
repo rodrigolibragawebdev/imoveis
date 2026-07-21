@@ -41,7 +41,33 @@ O banco local fica em `data/casa-em-pauta.sqlite`. As migrations e os dados inic
 - `Muito ruim` oculta o imóvel do ranking principal; o filtro dedicado permite recuperá-lo.
 - Bairros desejados recebem prioridade e também podem ser usados como filtro.
 - O filtro de duplicatas aponta o mesmo link sem tracking ou candidatos com mesmo bairro, quartos e área praticamente igual. Nada é excluído automaticamente.
-- Cards de móveis podem ser editados pelo ícone de lápis: categoria, link, nome, imagem e preço.
+- A lista da casa exibe foto, descrição, preço, metadados e ações em linhas responsivas.
+- Itens podem ser marcados como comprados, editados ou removidos; o status permanece após recarregar.
+- A seleção permite excluir vários itens de uma vez após confirmação.
+- O botão **Importar JSON** aceita texto colado ou arquivo `.json` com até 50 itens.
+
+Exemplo de importação:
+
+```json
+{
+  "items": [
+    {
+      "category": "Sala",
+      "url": "https://loja.com.br/produto/sofa",
+      "title": "Sofá de 3 lugares",
+      "imageUrl": "https://loja.com.br/imagens/sofa.jpg",
+      "price": 2499.9
+    },
+    {
+      "category": "Cozinha",
+      "url": "https://loja.com.br/produto/geladeira",
+      "price": 3899
+    }
+  ]
+}
+```
+
+`category` e `url` são obrigatórios. Use o nome exato de uma categoria já criada. `title`, `imageUrl` e `price` são opcionais; a API tenta preencher os metadados ausentes pelo link.
 
 Links do Zoom tentam preencher nome, imagem e menor preço pelos metadados da página. Quando a proteção do portal impede a leitura, o nome é derivado do próprio link e os demais campos continuam editáveis.
 

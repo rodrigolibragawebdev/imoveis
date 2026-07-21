@@ -20,8 +20,9 @@ Links equivalentes são comparados sem fragmento, parâmetros de tracking (`utm_
 - `PropertyRankingToolbar`: recebe filtros, bairros e contagens; emite alterações e abertura da gestão de bairros.
 - `PreferredNeighborhoodDialog`: lista bairros desejados; emite cadastro e remoção.
 - `PropertyCard`: apresenta posição, bairro desejado e motivos de duplicidade; emite voto/exclusão.
-- `FurnitureCatalog`: controla criação e seleção do item em edição.
+- `FurnitureCatalog`: controla filtros, seleção em lote, diálogos e operações do catálogo.
 - `FurnitureItemForm`: formulário único para criar/editar; recebe `item` e emite payload tipado.
-- `FurnitureCard`: apresenta ações de editar e remover.
+- `FurnitureListItem`: apresenta foto, descrição, preço, metadados, compra, edição e remoção.
+- `FurnitureImportDialog`: valida e normaliza importação JSON antes de enviá-la à store.
 
 O visual segue a direção editorial orgânica já existente: Fraunces/Manrope, creme, floresta e terracota. O ranking ganha uma “mesa de decisão” compacta, com posição tipográfica e chips de filtro, sem transformar a tela em dashboard genérico.

@@ -37,6 +37,21 @@ try {
     );
     expect((int) $database->query('SELECT COUNT(*) FROM furniture_categories')->fetchColumn() === 5, 'O seed deve criar cinco categorias');
     expect((int) $database->query('SELECT COUNT(*) FROM furniture_items')->fetchColumn() === 11, 'O seed deve criar onze móveis');
+    $furnitureColumns = $database->query('PRAGMA table_info(furniture_items)')->fetchAll();
+    expect(
+        in_array('is_purchased', array_column($furnitureColumns, 'name'), true),
+        'O catálogo deve persistir o status de compra',
+    );
+    $database->exec('UPDATE furniture_items SET is_purchased = 1 WHERE id = (SELECT MIN(id) FROM furniture_items)');
+    $purchasedRow = $database->query(<<<'SQL'
+        SELECT i.*, c.name AS category_name, c.color AS category_color
+        FROM furniture_items i
+        JOIN furniture_categories c ON c.id = i.category_id
+        WHERE i.is_purchased = 1
+        LIMIT 1
+        SQL)->fetch();
+    expect(is_array($purchasedRow), 'Um móvel comprado deve ser encontrado');
+    expect(mapFurniture($purchasedRow)['isPurchased'] === true, 'O status comprado deve ser serializado como booleano');
 
     runMigrations($database);
     expect(
@@ -93,7 +108,7 @@ try {
     $zoomMetadata = propertyUrlMetadata($zoomUrl);
     expect($zoomMetadata['title'] === 'Smart TV QD-Mini LED 65" TCL 4K 65C6K', 'O slug do Zoom deve gerar um título útil');
 
-    echo "OK: migrations, ranking, bairros, duplicatas e Zoom\n";
+    echo "OK: migrations, ranking, bairros, duplicatas, catálogo e Zoom\n";
 } finally {
     $insert = null;
     $database = null;

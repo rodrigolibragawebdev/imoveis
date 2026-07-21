@@ -8,6 +8,7 @@
 - [x] API PHP e SQLite
 - [x] Ranking, bairros desejados e análise de duplicatas
 - [x] Edição dos móveis e preview especializado do Zoom
+- [x] Lista da casa com status comprado, importação JSON e exclusão em lote
 
 ## Próximas possibilidades
 

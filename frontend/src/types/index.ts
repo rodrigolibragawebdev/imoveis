@@ -55,6 +55,7 @@ export interface FurnitureItem {
   price: number | null
   source: string
   isSeeded: boolean
+  isPurchased: boolean
   createdAt: string
   updatedAt: string
 }

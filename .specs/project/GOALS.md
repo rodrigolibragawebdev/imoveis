@@ -1,3 +1,3 @@
 # Objetivo atual
 
-Entregar ranking útil de imóveis, bairros desejados, revisão de duplicatas e catálogo de móveis editável sobre a API PHP com migrations.
+Manter um painel confiável para decidir o imóvel e executar o planejamento da casa, com ranking, visitas, lista de compras operável e documentação alinhada ao código.
