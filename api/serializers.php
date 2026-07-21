@@ -47,6 +47,7 @@ function mapFurniture(array $row): array
         'price' => $row['price'] !== null ? (float) $row['price'] : null,
         'source' => (string) $row['source'],
         'isSeeded' => (bool) $row['is_seeded'],
+        'isPurchased' => (bool) ($row['is_purchased'] ?? false),
         'createdAt' => (string) $row['created_at'],
         'updatedAt' => (string) ($row['updated_at'] ?? $row['created_at']),
     ];

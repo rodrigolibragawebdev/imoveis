@@ -509,6 +509,146 @@ try {
         sendJson(mapFurniture($item), 201);
     }
 
+    if ($method === 'POST' && $path === '/furniture/items/bulk') {
+        $body = jsonBody();
+        $items = $body['items'] ?? null;
+        if (!is_array($items) || count($items) < 1) {
+            throw new ApiException('Informe pelo menos um item para importar');
+        }
+        if (count($items) > 50) {
+            throw new ApiException('Importe no mÃ¡ximo 50 itens por vez');
+        }
+
+        $findCategory = $database->prepare('SELECT 1 FROM furniture_categories WHERE id = ?');
+        $findExisting = $database->prepare('SELECT 1 FROM furniture_items WHERE url = ?');
+        $normalizedItems = [];
+        $seenUrls = [];
+        foreach ($items as $index => $item) {
+            if (!is_array($item)) {
+                throw new ApiException('Cada item da importaÃ§Ã£o precisa ser um objeto');
+            }
+            $position = $index + 1;
+            $categoryId = positiveInteger($item['categoryId'] ?? null, "items[{$index}].categoryId");
+            $url = canonicalHttpUrl($item['url'] ?? null, "items[{$index}].url");
+            if (isset($seenUrls[$url])) {
+                throw new ApiException("O link do item {$position} estÃ¡ repetido no JSON");
+            }
+            $seenUrls[$url] = true;
+
+            $title = null;
+            if (isset($item['title']) && $item['title'] !== '') {
+                $title = cleanText($item['title'], "items[{$index}].title", 1, 140);
+            }
+            $imageUrl = null;
+            if (isset($item['imageUrl']) && $item['imageUrl'] !== '') {
+                $imageUrl = canonicalHttpUrl($item['imageUrl'], "items[{$index}].imageUrl");
+            }
+            $price = optionalPrice($item['price'] ?? null);
+
+            $findCategory->execute([$categoryId]);
+            if ($findCategory->fetchColumn() === false) {
+                throw new ApiException("A categoria do item {$position} nÃ£o foi encontrada", 404);
+            }
+            $findExisting->execute([$url]);
+            if ($findExisting->fetchColumn() !== false) {
+                throw new ApiException("O link do item {$position} jÃ¡ estÃ¡ no catÃ¡logo", 409);
+            }
+            $normalizedItems[] = compact('categoryId', 'url', 'title', 'imageUrl', 'price');
+        }
+
+        $preparedItems = [];
+        foreach ($normalizedItems as $item) {
+            $preview = linkPreview($item['url']);
+            $preparedItems[] = [
+                ...$item,
+                'title' => $item['title'] ?? $preview['title'],
+                'imageUrl' => $item['imageUrl'] ?? $preview['imageUrl'],
+                'price' => $item['price'] ?? $preview['price'],
+                'source' => $preview['source'],
+            ];
+        }
+
+        $insert = $database->prepare(
+            'INSERT INTO furniture_items (category_id, url, title, image_url, price, source, updated_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
+        );
+        $createdIds = [];
+        $database->beginTransaction();
+        try {
+            foreach ($preparedItems as $item) {
+                $insert->execute([
+                    $item['categoryId'],
+                    $item['url'],
+                    $item['title'],
+                    $item['imageUrl'],
+                    $item['price'],
+                    $item['source'],
+                ]);
+                $createdIds[] = (int) $database->lastInsertId();
+            }
+            $database->commit();
+        } catch (Throwable $error) {
+            if ($database->inTransaction()) {
+                $database->rollBack();
+            }
+            if ($error instanceof PDOException && str_contains(strtolower($error->getMessage()), 'unique')) {
+                throw new ApiException('Um dos links jÃ¡ estÃ¡ no catÃ¡logo', 409, $error);
+            }
+            throw $error;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($createdIds), '?'));
+        $findCreated = $database->prepare(<<<SQL
+            SELECT i.*, c.name AS category_name, c.color AS category_color
+            FROM furniture_items i
+            JOIN furniture_categories c ON c.id = i.category_id
+            WHERE i.id IN ({$placeholders})
+            ORDER BY i.id
+            SQL);
+        $findCreated->execute($createdIds);
+        sendJson(array_map('mapFurniture', $findCreated->fetchAll()), 201);
+    }
+
+    if ($method === 'DELETE' && $path === '/furniture/items/bulk') {
+        $body = jsonBody();
+        $ids = $body['ids'] ?? null;
+        if (!is_array($ids) || count($ids) < 1) {
+            throw new ApiException('Selecione pelo menos um item para excluir');
+        }
+        if (count($ids) > 100) {
+            throw new ApiException('Exclua no mÃ¡ximo 100 itens por vez');
+        }
+        $validatedIds = [];
+        foreach ($ids as $id) {
+            $validatedIds[] = positiveInteger($id, 'ids');
+        }
+        $validatedIds = array_values(array_unique($validatedIds));
+        $placeholders = implode(', ', array_fill(0, count($validatedIds), '?'));
+        $delete = $database->prepare("DELETE FROM furniture_items WHERE id IN ({$placeholders})");
+        $delete->execute($validatedIds);
+        sendJson(['deleted' => $delete->rowCount()]);
+    }
+
+    if ($method === 'PATCH' && preg_match('#^/furniture/items/(?<id>\d+)/purchased$#', $path, $match) === 1) {
+        $id = positiveInteger($match['id'], 'id');
+        $body = jsonBody();
+        $isPurchased = $body['isPurchased'] ?? null;
+        if (!is_bool($isPurchased)) {
+            throw new ApiException('O status de compra precisa ser verdadeiro ou falso');
+        }
+        $update = $database->prepare(
+            'UPDATE furniture_items SET is_purchased = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        );
+        $update->execute([$isPurchased ? 1 : 0, $id]);
+        if ($update->rowCount() === 0) {
+            $exists = $database->prepare('SELECT 1 FROM furniture_items WHERE id = ?');
+            $exists->execute([$id]);
+            if ($exists->fetchColumn() === false) {
+                throw new ApiException('Item nÃ£o encontrado', 404);
+            }
+        }
+        sendJson(['id' => $id, 'isPurchased' => $isPurchased]);
+    }
+
     if ($method === 'PATCH' && preg_match('#^/furniture/items/(?<id>\d+)$#', $path, $match) === 1) {
         $id = positiveInteger($match['id'], 'id');
         $body = jsonBody();
