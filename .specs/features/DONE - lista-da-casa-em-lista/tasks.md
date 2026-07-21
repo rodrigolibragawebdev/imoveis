@@ -22,3 +22,6 @@
   - Fracionar em lotes de 10, exibir progresso e persistir checkpoint por conteúdo no `localStorage`.
   - Registrar respostas de erro com código de correlação em `storage/logs`, sem dados do payload.
   - Gate: retomada idempotente por nome, orçamento de preview, logger correlacionado e smoke HTTP.
+- [x] **T8 — Busca textual**
+  - Adicionar campo responsivo e filtro local normalizado sobre itens e variações.
+  - Gate: resultado, resumo, seleção, vazio e limpeza usam somente os itens visíveis; typecheck e build aprovados.

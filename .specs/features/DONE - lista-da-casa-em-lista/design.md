@@ -14,10 +14,10 @@ O frontend converte `category` por nome em `categoryId`; a API recebe somente o 
 
 ## Componentes
 
-- `FurnitureCatalog`: container; coordena carregamento, filtros, seleção, operações e feedback.
+- `FurnitureCatalog`: container; coordena carregamento, filtros, busca textual derivada, seleção, operações e feedback.
 - `FurnitureListItem`: linha apresentacional; recebe item/seleção e emite compra, edição, exclusão e seleção.
 - `FurnitureImportDialog`: lê texto/arquivo, valida o contrato, mostra exemplo e emite itens normalizados.
-- `FurnitureFilters`: mantém categoria e ordenação.
+- `FurnitureFilters`: apresenta categoria, busca textual e ordenação; o texto usa `v-model` tipado e não dispara requisições.
 - `FurnitureItemForm` e `CategoryForm`: preservam os fluxos individuais existentes.
 - `ConfirmDialog` global: recebe do container as confirmações individual e em lote, com foco seguro em “Cancelar”.
 
@@ -26,6 +26,7 @@ O frontend converte `category` por nome em `categoryId`; a API recebe somente o 
 - Normal: fundo creme, metadados suaves e preço em terracota.
 - Selecionado: borda terracota e halo discreto.
 - Comprado: fundo verde suave, imagem dessaturada, selo e título riscado.
+- Busca: comparação local normalizada por caixa/acentos sobre item e variações; contador e seleção usam somente `visibleItems`.
 - Mobile: linha reorganizada em foto/descrição, preço e barra de ações sem rolagem horizontal.
 
 ## Segurança e limites

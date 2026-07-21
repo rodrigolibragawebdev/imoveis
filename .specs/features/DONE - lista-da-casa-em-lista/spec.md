@@ -23,6 +23,7 @@ Transformar o catálogo visual de móveis em uma lista operacional para acompanh
 - **CASA-16**: registrar toda resposta de erro com código de correlação em `storage/logs`, sem persistir o conteúdo importado, cookies ou headers.
 - **CASA-12**: manter criação, edição, filtro por categoria e ordenação já existentes.
 - **CASA-13**: usar “Ver produto” para itens iniciais em vez de expor a origem técnica “Lista inicial”.
+- **CASA-17**: filtrar instantaneamente a lista por texto, sem diferença de maiúsculas ou acentos, considerando item principal, categoria, origem, link e variações.
 
 ## Formato de importação
 
@@ -53,6 +54,8 @@ Transformar o catálogo visual de móveis em uma lista operacional para acompanh
 - Marcar “Comprei” continua visível após atualizar a página.
 - O resumo informa total visível e quantidade comprada.
 - Selecionar todos respeita somente o filtro atual.
+- A busca textual atualiza lista, resumo e seleção; um termo encontrado em uma variação mantém seu item principal visível.
+- Busca sem resultado apresenta o termo procurado e uma ação para limpar o campo.
 - Exclusões individual e em lote usam diálogo PrimeVue, sem confirmação nativa do navegador.
 - Uma exclusão em lote inativa apenas os IDs confirmados e os disponibiliza na lixeira.
 - A inativação de qualquer quantidade selecionada é processada internamente em blocos e concluída integralmente ou revertida.

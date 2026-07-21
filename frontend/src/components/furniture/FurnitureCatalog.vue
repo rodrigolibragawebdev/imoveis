@@ -18,6 +18,7 @@
         :categories="store.categories"
         :category-id="store.categoryId"
         :sort="store.sort"
+        v-model:search-query="searchQuery"
         @change="store.setFilters($event.categoryId, $event.sort)"
       />
 
@@ -28,7 +29,7 @@
             binary
             input-id="select-all-furniture"
             aria-label="Selecionar todos os itens visíveis"
-            :disabled="!store.items.length"
+            :disabled="!visibleItems.length"
             @update:model-value="toggleAll(Boolean($event))"
           />
           <label for="select-all-furniture">
@@ -52,9 +53,9 @@
       <div v-if="store.loading" class="furniture-list" aria-label="Carregando itens">
         <Skeleton v-for="index in 6" :key="index" height="7.25rem" border-radius="1.25rem" />
       </div>
-      <TransitionGroup v-else-if="store.items.length" name="list" tag="div" class="furniture-list">
+      <TransitionGroup v-else-if="visibleItems.length" name="list" tag="div" class="furniture-list">
         <FurnitureListItem
-          v-for="item in store.items"
+          v-for="item in visibleItems"
           :key="item.id"
           :item="item"
           :selected="selectedIds.includes(item.id)"
@@ -69,9 +70,10 @@
       </TransitionGroup>
       <div v-else class="empty-state">
         <span class="empty-icon"><i class="pi pi-inbox" /></span>
-        <h2 class="display-font">Nenhum item por aqui</h2>
-        <p>Troque o filtro, importe um JSON ou adicione o primeiro link desta categoria.</p>
-        <Button label="Adicionar primeiro item" icon="pi pi-plus" @click="openCreate" />
+        <h2 class="display-font">{{ emptyStateTitle }}</h2>
+        <p>{{ emptyStateDescription }}</p>
+        <Button v-if="hasSearch" label="Limpar busca" icon="pi pi-times" severity="secondary" outlined @click="searchQuery = ''" />
+        <Button v-else label="Adicionar primeiro item" icon="pi pi-plus" @click="openCreate" />
       </div>
     </div>
 
@@ -140,10 +142,27 @@ const editingItem = shallowRef<FurnitureItem | null>(null)
 const variationParent = shallowRef<FurnitureItem | null>(null)
 const editingVariation = shallowRef<FurnitureVariation | null>(null)
 const selectedIds = shallowRef<number[]>([])
+const searchQuery = shallowRef('')
 
-const allVisibleSelected = computed(() => store.items.length > 0 && store.items.every((item) => selectedIds.value.includes(item.id)))
-const purchasedCount = computed(() => store.items.filter((item) => item.isPurchased).length)
-const listSummary = computed(() => `${store.items.length} ${store.items.length === 1 ? 'item' : 'itens'} · ${purchasedCount.value} ${purchasedCount.value === 1 ? 'comprado' : 'comprados'}`)
+const normalizedSearchQuery = computed(() => foldSearchText(searchQuery.value))
+const hasSearch = computed(() => normalizedSearchQuery.value !== '')
+const visibleItems = computed(() => {
+  if (!normalizedSearchQuery.value) return store.items
+  return store.items.filter((item) => furnitureSearchText(item).includes(normalizedSearchQuery.value))
+})
+const allVisibleSelected = computed(() => visibleItems.value.length > 0 && visibleItems.value.every((item) => selectedIds.value.includes(item.id)))
+const purchasedCount = computed(() => visibleItems.value.filter((item) => item.isPurchased).length)
+const listSummary = computed(() => {
+  const visibleCount = visibleItems.value.length
+  const countLabel = hasSearch.value
+    ? `${visibleCount} de ${store.items.length} ${store.items.length === 1 ? 'item' : 'itens'}`
+    : `${visibleCount} ${visibleCount === 1 ? 'item' : 'itens'}`
+  return `${countLabel} · ${purchasedCount.value} ${purchasedCount.value === 1 ? 'comprado' : 'comprados'}`
+})
+const emptyStateTitle = computed(() => hasSearch.value ? 'Nenhum resultado' : 'Nenhum item por aqui')
+const emptyStateDescription = computed(() => hasSearch.value
+  ? `Não encontramos item ou variação para “${searchQuery.value.trim()}”.`
+  : 'Troque o filtro, importe um JSON ou adicione o primeiro link desta categoria.')
 
 onMounted(store.initialize)
 watch(itemDialog, (isOpen) => {
@@ -165,7 +184,7 @@ watch(trashDialog, async (isOpen) => {
     showError('Não foi possível abrir a lixeira')
   }
 })
-watch(() => store.items.map((item) => item.id), (visibleIds) => {
+watch(() => visibleItems.value.map((item) => item.id), (visibleIds) => {
   const visible = new Set(visibleIds)
   selectedIds.value = selectedIds.value.filter((id) => visible.has(id))
 })
@@ -199,7 +218,26 @@ function setSelected(id: number, selected: boolean) {
 }
 
 function toggleAll(selected: boolean) {
-  selectedIds.value = selected ? store.items.map((item) => item.id) : []
+  selectedIds.value = selected ? visibleItems.value.map((item) => item.id) : []
+}
+
+function foldSearchText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function furnitureSearchText(item: FurnitureItem) {
+  return foldSearchText([
+    item.title,
+    item.source,
+    item.url,
+    item.categoryName,
+    ...item.variations.flatMap((variation) => [variation.title, variation.source, variation.url]),
+  ].join(' '))
 }
 
 async function createCategory(payload: { name: string; color: string }) {
