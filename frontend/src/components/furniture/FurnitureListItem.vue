@@ -161,7 +161,8 @@ function markVariationImageFailed(id: number) {
 </script>
 
 <style scoped>
-.item-group { position: relative; }
+.item-group { position: relative; margin-bottom: .25rem; }
+.item-group.has-variations { margin-bottom: 1rem; }
 .furniture-row {
   display: grid;
   grid-template-columns: 2rem 6.5rem minmax(12rem, 1.5fr) minmax(9rem, .55fr) minmax(10rem, .7fr) auto;
@@ -209,9 +210,10 @@ function markVariationImageFailed(id: number) {
 .variation-toolbar small { color: rgba(38, 48, 41, .45); font-size: .68rem; }
 .toolbar-connector { position: absolute; left: -4.65rem; top: -.16rem; width: 4.8rem; height: 1.35rem; border-bottom: 1px solid rgba(182, 92, 58, .3); border-left: 1px solid rgba(182, 92, 58, .3); border-bottom-left-radius: .8rem; }
 .variation-toolbar :deep(.p-button) { color: var(--terracotta); padding-left: .45rem; padding-right: .55rem; }
-.variation-list { position: relative; display: flex; flex-direction: column; gap: .45rem; margin: .1rem 0 .2rem 3.15rem; padding-left: 1.45rem; }
-.variation-list::before { content: ''; position: absolute; left: 0; top: -.1rem; bottom: 50%; width: 2px; background: linear-gradient(var(--terracotta), rgba(182, 92, 58, .22)); }
+.variation-list { position: relative; display: flex; flex-direction: column; gap: .6rem; margin: .1rem 0 .35rem 3.15rem; padding-left: 1.45rem; }
 .variation-row { position: relative; display: grid; grid-template-columns: 4rem minmax(12rem, 1fr) minmax(9rem, .35fr) auto; align-items: center; gap: .9rem; min-height: 5.15rem; padding: .7rem .85rem; border: 1px dashed rgba(182, 92, 58, .3); border-radius: 1rem; background: rgba(255, 250, 240, .58); }
+.variation-row::before { content: ''; position: absolute; left: -1.5rem; top: calc(-.6rem - 1px); width: 1px; height: calc(50% + .6rem + 1px); background: rgba(182, 92, 58, .48); }
+.variation-row:first-child::before { top: -.1rem; height: calc(50% + .1rem); background: linear-gradient(var(--terracotta), rgba(182, 92, 58, .48)); }
 .variation-connector { position: absolute; left: -1.5rem; top: 50%; width: 1.5rem; height: 2px; background: rgba(182, 92, 58, .4); }
 .variation-connector::after { content: ''; position: absolute; right: -.18rem; top: -.2rem; width: .45rem; height: .45rem; border-radius: 50%; background: var(--terracotta); }
 .variation-media { width: 4rem; height: 3.75rem; overflow: hidden; border-radius: .75rem; background: rgba(54, 82, 68, .08); }

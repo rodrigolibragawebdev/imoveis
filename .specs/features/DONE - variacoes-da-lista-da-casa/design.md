@@ -20,4 +20,4 @@ Consultas de duplicidade consideram URLs de itens principais e variações. A st
 
 ## Hierarquia visual
 
-O item principal ganha selo quando possui alternativas. A faixa de adição fica abaixo da linha principal. Cada filho usa recuo, conector terracota, borda tracejada, imagem compacta, rótulo numerado, preço e ações próprias.
+O item principal ganha selo quando possui alternativas. A faixa de adição fica abaixo da linha principal. Cada filho usa recuo, conector terracota, borda tracejada, imagem compacta, rótulo numerado, preço e ações próprias. O tronco é composto por segmentos de cada filho até o seu centro, garantindo que alcance o último ramo em listas de qualquer tamanho; grupos com variações recebem margem inferior maior antes do próximo item.

@@ -8,3 +8,4 @@
 - [x] Cobrir serialização e exclusão em cascata no teste de integração.
 - [x] Remover limite fixo de importação, fracionar o envio e ignorar nomes duplicados no JSON.
 - [x] Executar smoke HTTP final e confirmar todos os gates.
+- [x] Corrigir o conector do último ramo e ampliar o espaçamento entre grupos de itens.

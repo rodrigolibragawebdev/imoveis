@@ -15,6 +15,7 @@ Permitir comparar links alternativos do mesmo produto sem poluir a lista com ite
 - **VAR-07**: permitir editar e excluir uma variação sem alterar o item principal.
 - **VAR-08**: preservar todas as variações quando o item principal for movido para a lixeira.
 - **VAR-09**: impedir que um mesmo link exista simultaneamente como item ou variação no catálogo.
+- **VAR-10**: o conector vertical deve alcançar o último ramo, sem sobrar linha depois dele, e o grupo completo deve ter separação clara do próximo item principal.
 
 ## Critérios de aceite
 
@@ -22,6 +23,7 @@ Permitir comparar links alternativos do mesmo produto sem poluir a lista com ite
 - Após adicionar somente um link, a opção aparece abaixo do item e permanece após recarregar.
 - Preview ausente não impede o cadastro; um título derivado do endereço mantém o link identificável.
 - A hierarquia entre item principal e variações é clara em desktop e mobile.
+- Três ou mais variações mantêm todos os ramos conectados e deixam respiro perceptível antes do grupo seguinte.
 - Editar ou excluir uma variação afeta somente a opção escolhida.
-- Mover o item principal para a lixeira preserva seus filhos; a FK mantém cascata apenas para eventual manutenção física fora da interface.
+- Mover o item principal para a lixeira preserva seus filhos; excluir definitivamente pela lixeira aciona a cascata da FK.
 - Typecheck, build, lint PHP, integração e smoke HTTP passam.
